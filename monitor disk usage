@@ -1,0 +1,11 @@
+#! /bin/bash
+HOST_INFO=host.info
+for IP in S(awk  /A[A#]/[print $1]' SHOST_INFO); doUSER=S(awk -v ip=SIP ip==Sl[print $2]' SHOST_INFO)PORT=S(awk -v ip=SIP  ip==Sl[print $3]' SHOST_INFO)TMP_FILE=/tmp/disk.tmp
+ssh -p SPORT SUSER@SIP 'df -h'> STMP_FILEUSE_RATE_LIST=S(awk BEGIN(OFS="-"]/A /dev/[print SNFint(S5)]' STMP_FILE)for USE RATE in SUSE RATE LIST: do
+PART_NAME=S(USE RATE%=*]
+USE RATE=S[USE RATE#*=]
+if [ SUSE_RATE -ge 80 ]; then
+echo "warning: SPART_NAME Partition usage SUSE_RATE%!"
+f
+done
+done

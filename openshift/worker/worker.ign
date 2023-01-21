@@ -1,0 +1,12 @@
+  {  
+  "ignition": {  
+  "version": "3.2.0",  
+  "config": {  
+    "replace": {  
+    "source": "http://${deployHost}:8888/worker.ign"
+    
+    
+  }  
+  }  
+  } 
+  }

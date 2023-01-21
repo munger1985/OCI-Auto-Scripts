@@ -1,0 +1,5 @@
+.idea
+.terraform/
+/.terraform/
+/bootstrap/.terraform/
+/master/.terraform/

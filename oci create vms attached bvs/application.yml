@@ -1,0 +1,12 @@
+oci:
+   compartmentId: ocid1.compartment.oc1..aaaaaaaahr7aicqtodxmcfor6pbqn3hvsngpftozyxzqw36gj4kh3w3kkj4q
+   shape: VM.Standard.E4.Flex
+   ocpu: 1
+   mem: 16
+   imageId: ocid1.image.oc1.ap-singapore-1.aaaaaaaa75axhm7hq5b56dnpaqfdoptmg4peq2f7emrtu4ltmfr7fbwpptsq
+   BVSizeInGB: 50
+   subnetId: ocid1.subnet.oc1.ap-singapore-1.aaaaaaaatpvllywx7w2nzcnag5ey7uf3hn4pg3pai7oh34iapi2uost4acda
+   freeTagValue: 1
+   freeTagKey: Auto
+   vmName: VM-Auto
+   sshPubkey: ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDhQFh6j4znbA6Wssc5sDSo5sE2ZjZpGKqNXYVg273smS4xKhlnvnC79h1CKZzSdsgghOIJEcZejQt32bWZ/ISnY8rgBM5K8sTMzmLjljmqC+jsqfyXN8rwqi4R93CL7TQaQTowsQUTE012MgfKD2UqsxtJNnB8iEiT+lxpz5Ng4+0xU1z3SRdMmDRO6GUgOQt0mozcW/8AGI4QL88+qLaU/rdT+4xOFjDEniRwKr46+3JburxWoMi5K63wCvaPY6JXeoLH6M92CDzQYv8ee4q6KuhCte6KP9bJaFcUc4nBHvqjC57Llel7Vf/9jZeGdRX6g6irlyjvDnmNYmGfGHE731sn8OeygxVVQrA1WrnNtUmfIPUAhbWkGArUywCS0CkbytoljyLDV93TmPSjm/8weuYWP9bC3PWEAW3ZaSJcaQtTq7DaC+9WBFXLiNv8VYlyCBP71GnvnjMm+EaP5czQz8Kf6XahOpEBImaT1XbCKgVVK+BFkq2FUv9Cs6phgQc= mm

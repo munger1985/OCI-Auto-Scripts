@@ -1,0 +1,118 @@
+
+
+resource "oci_load_balancer_load_balancer" "apilb" {
+	compartment_id = var.compartment_ocid
+	display_name   = "OpenShift API  LB"
+	shape          = "100Mbps"
+	subnet_ids     = [var.subnetId]
+
+	#Optional
+	ip_mode    = "IPV4"
+	is_private =  "true"
+#	is_private =  "false"
+
+	#network_security_group_ids = var.load_balancer_network_security_group_ids
+}
+#resource "oci_load_balancer_load_balancer" "appslb" {
+#	#Required
+#	compartment_id = var.compartment_ocid
+#	display_name   = "OpenShift Apps LB"
+#	shape          = "100Mbps"
+#	subnet_ids     = [var.subnetId]
+#
+#	#Optional
+#	ip_mode    = "IPV4"
+#	is_private = "false"
+#	#network_security_group_ids = var.load_balancer_network_security_group_ids
+#}
+resource "oci_load_balancer_backend_set" "api_backend_set" {
+	health_checker {
+		protocol = "TCP"
+		port     = "6443"
+	}
+	load_balancer_id = oci_load_balancer_load_balancer.apilb.id
+	name             = "api_backend_set"
+	policy           = "ROUND_ROBIN"
+
+}
+
+resource "oci_load_balancer_backend_set" "http_backend_set" {
+	health_checker {
+		protocol = "TCP"
+		port     = "22623"
+	}
+	load_balancer_id = oci_load_balancer_load_balancer.apilb.id
+	name             = "http_backend_set"
+	policy           = "ROUND_ROBIN"
+
+}
+////////////////////
+resource "oci_load_balancer_backend" "httpbe" {
+	backendset_name  = oci_load_balancer_backend_set.http_backend_set.name
+	ip_address       = var.bootStrapIp
+	load_balancer_id = oci_load_balancer_load_balancer.apilb.id
+	port             = "22623"
+}
+resource "oci_load_balancer_backend" "httpbe1" {
+	backendset_name  = oci_load_balancer_backend_set.http_backend_set.name
+	ip_address       = var.master0Ip
+	load_balancer_id = oci_load_balancer_load_balancer.apilb.id
+	port             = "22623"
+}
+resource "oci_load_balancer_backend" "httpbe2" {
+	backendset_name  = oci_load_balancer_backend_set.http_backend_set.name
+	ip_address       = var.master1Ip
+	load_balancer_id = oci_load_balancer_load_balancer.apilb.id
+	port             = "22623"
+}
+resource "oci_load_balancer_backend" "httpbe3" {
+	backendset_name  = oci_load_balancer_backend_set.http_backend_set.name
+	ip_address       = var.master2Ip
+	load_balancer_id = oci_load_balancer_load_balancer.apilb.id
+	port             = "22623"
+}
+////////////////////
+resource "oci_load_balancer_backend" "apibe" {
+	backendset_name  = oci_load_balancer_backend_set.api_backend_set.name
+	ip_address       = var.bootStrapIp
+	load_balancer_id = oci_load_balancer_load_balancer.apilb.id
+	port             = "6443"
+}
+resource "oci_load_balancer_backend" "apibe1" {
+	backendset_name  = oci_load_balancer_backend_set.api_backend_set.name
+	ip_address       = var.master0Ip
+	load_balancer_id = oci_load_balancer_load_balancer.apilb.id
+	port             = "6443"
+}
+resource "oci_load_balancer_backend" "apibe2" {
+	backendset_name  = oci_load_balancer_backend_set.api_backend_set.name
+	ip_address       = var.master1Ip
+	load_balancer_id = oci_load_balancer_load_balancer.apilb.id
+	port             = "6443"
+}
+resource "oci_load_balancer_backend" "apibe3" {
+	backendset_name  = oci_load_balancer_backend_set.api_backend_set.name
+	ip_address       = var.master2Ip
+	load_balancer_id = oci_load_balancer_load_balancer.apilb.id
+	port             = "6443"
+}
+
+
+
+
+resource "oci_load_balancer_listener" "api_bs_listener" {
+	default_backend_set_name = oci_load_balancer_backend_set.api_backend_set.name
+	load_balancer_id         = oci_load_balancer_load_balancer.apilb.id
+	name                     = "api_bs_listener"
+	port                     = "6443"
+	protocol                 = "TCP"
+}
+resource "oci_load_balancer_listener" "http_bs_listener" {
+	default_backend_set_name = oci_load_balancer_backend_set.http_backend_set.name
+	load_balancer_id         = oci_load_balancer_load_balancer.apilb.id
+	name                     = "http_bs_listener"
+	port                     = "22623"
+	protocol                 = "TCP"
+}
+
+
