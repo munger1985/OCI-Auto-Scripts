@@ -14,3 +14,5 @@ everyone can create pull request so that we can collect those useful scripts and
 
 - [oci create vms attached new blockvolumes](https://github.com/munger1985/OCI-Auto-Scripts/tree/main/oci%20create%20vms%20attached%20bvs)
 - [openshift auto deployed on OCI vms](./openshift/README.md)
+- [batch add tags to existing oci resources ](https://github.com/munger1985/OCI-Auto-Scripts/tree/main/oci%20batch%20add%20tags)
+- [use ssh to run cmd in oci vm](https://github.com/munger1985/OCI-Auto-Scripts/tree/main/ssh%20remote%20run%20cmd%20and%20format%20blockvolume)
