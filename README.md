@@ -12,5 +12,5 @@ everyone can create pull request so that we can collect those useful scripts and
 
 ## openshift auto deployed on OCI vms
 
-- [oci create vms attached bvs](./oci create vms attached bvs/README.md)
-- [openshift auto deployed on OCI vms](./openshift/openshift.README)
+- [oci create vms attached new blockvolumes](https://github.com/munger1985/OCI-Auto-Scripts/tree/main/oci%20create%20vms%20attached%20bvs)
+- [openshift auto deployed on OCI vms](./openshift/README.md)
