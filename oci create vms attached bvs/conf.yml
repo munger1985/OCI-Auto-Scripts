@@ -8,6 +8,8 @@ oci:
    imageId: ocid1.image.oc1.ap-singapore-1.aaaaaaaa75axhm7hq5b56dnpaqfdoptmg4peq2f7emrtu4ltmfr7fbwpptsq
    # 0 means no block volume needed
    BVSizeInGB: 0
+   # if the subnet is private, use true, else use false
+   priSubnet: true   
    subnetId: ocid1.subnet.oc1.ap-singapore-1.aaaaaaaatpvllywx7w2nzcnag5ey7uf3hn4pg3pai7oh34iapi2uost4acda
    freeTagValue: 1
    freeTagKey: Auto
@@ -29,6 +31,8 @@ oci2:
       mem: 8
       imageId: ocid1.image.oc1.ap-singapore-1.aaaaaaaa75axhm7hq5b56dnpaqfdoptmg4peq2f7emrtu4ltmfr7fbwpptsq
       BVSizeInGB: 50
+      # if the subnet is private, use true, else use false
+      priSubnet: false   
       subnetId: ocid1.subnet.oc1.ap-singapore-1.aaaaaaaatpvllywx7w2nzcnag5ey7uf3hn4pg3pai7oh34iapi2uost4acda
       freeTagValue: 1
       freeTagKey: Auto
