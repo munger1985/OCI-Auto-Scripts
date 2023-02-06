@@ -12,5 +12,5 @@ everyone can create pull request so that we can collect those useful scripts and
 
 ## openshift auto deployed on OCI vms
 
-- [OKE上部署Metrics Server](https://nengbai.github.io/oke-dashboard/?lab=oke-metrics&nav=open)
+## [oci create vms attached bvs](./oci create vms attached bvs/READNE.md)
 - [openshift auto deployed on OCI vms](./openshift/openshift.README)
