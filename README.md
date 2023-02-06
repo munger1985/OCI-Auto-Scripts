@@ -6,7 +6,7 @@ everyone can create pull request so that we can collect those useful scripts and
 
 # Usecase List
 
-## oci create vms attached bvs
+## oci create vms attached bvs(./oci create vms attached bvs)
 
 ## oci batch add tags
 
