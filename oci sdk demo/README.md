@@ -8,4 +8,4 @@ The oracle cloud infrastructure provide sdk for developer, and users can manage 
 # Usecase List
 
 
-- [oci sdk demo for .net](./oci%20sdk%20demo/OCIDotnetSdkDemos)
+- [oci sdk demo for .net](./OCIDotnetSdkDemos)
