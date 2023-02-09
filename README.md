@@ -1,15 +1,31 @@
 # OCI-Auto-Scripts
-this repo is for colleting some useful scripts when you use OCI oracle cloud infrastructure.
 
-# Contribution approach
-everyone can create pull request so that we can collect those useful scripts and tips as well as tools together in one place, we will manage and merge your pull request into this repo
+This repo is for collecting some useful scripts when you use Oracle Cloud Infrastructure (OCI), especially when you need to operate mutliple resources at once.
+
+The scripts could be writen based on OCI CLI command, or python/C#/Java code based on OCI SDK.
+
+# Prerequisites
+You have to setup related OCI CLI or SDK envrionment before running the code directly.
+Follow the Oracle Offical documents about how to setup related envrionment.
+
+CLI setup: https://docs.oracle.com/en-us/iaas/Content/API/Concepts/cliconcepts.htm
+SDK setup: https://docs.oracle.com/en-us/iaas/Content/API/Concepts/sdks.htm
+
+You could also run these on CloudShell instead your own workstation/laptop.
+
+https://docs.oracle.com/en-us/iaas/Content/API/Concepts/devcloudshellintro.htm
+
 
 # Usecase List
-
  
+Here are the usecases covered by the scripts, we list these as scripts examples, and hope to give some rough idea on how to adjust the code to fit your real usecases.
 
-- [oci create vms attached new blockvolumes](./oci%20create%20vms%20attached%20bvs)
-- [openshift auto deployed on OCI vms](./openshift/README.md)
-- [batch add tags to existing oci resources ](./oci%20batch%20add%20tags)
-- [use ssh to run cmd in oci vm, e.g. format block volume disks](./ssh%20remote%20run%20cmd%20and%20format%20blockvolume)
-- [oci sdk demo for .net](./oci%20.net%20sdk%20demo)
+- [Create VMs and Attach New Block Volumes](./oci%20create%20vms%20attached%20bvs)
+- [Openshift Automatic Deployment on OCI VMs](./openshift/README.md)
+- [Add/update tags to OCI Resources ](./oci%20batch%20add%20tags)
+- [Format Block Volume Disks](./ssh%20remote%20run%20cmd%20and%20format%20blockvolume)
+- [OCI SDK .Net Sample Code](./oci%20sdk%20demo)
+
+# Contributing
+
+Contributions are what make the open source community such an amazing place to learn, inspire, and create. Any contributions you make are greatly appreciated.
