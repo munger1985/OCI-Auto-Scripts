@@ -1,10 +1,11 @@
 # OCI-Auto-Scripts
 
-This repo is for collecting some useful scripts when you use Oracle Cloud Infrastructure (OCI), especially when you need to operate mutliple resources at once.
+This repo is for collecting scripts when you use Oracle Cloud Infrastructure (OCI), especially when you need to operate mutliple resources at once.
 
-The scripts could be writen based on OCI CLI command, or python/C#/Java code based on OCI SDK.
+The script could be writen based on OCI CLI command, or python/C#/Java code based on OCI SDK.
 
 # Prerequisites
+
 You have to setup related OCI CLI or SDK envrionment before running the code directly.
 Follow the Oracle Offical documents about how to setup related envrionment.
 
@@ -30,4 +31,10 @@ Here are the usecases covered by the scripts, we list these as scripts examples,
 
 # Contributing
 
-Contributions are what make the open source community such an amazing place to learn, inspire, and create. Any contributions you make are greatly appreciated.
+Contributions are what make the open source community such an amazing place to learn, inspire, and create. Any contributions you make are greatly appreciated.  The repo is maintained by Oracle China SEHub Solutions employees, but not related with Oracle offical obligation. 
+
+If you have a suggestion that would make this better, please fork the repo and create a pull request. You can also simply open an issue with the tag "enhancement". Don't forget to give the project a star! Thanks again!
+
+# Contributing
+You could also contact us by mail,  63472696@qq.com
+
