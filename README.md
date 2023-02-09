@@ -12,4 +12,4 @@ everyone can create pull request so that we can collect those useful scripts and
 - [openshift auto deployed on OCI vms](./openshift/README.md)
 - [batch add tags to existing oci resources ](./oci%20batch%20add%20tags)
 - [use ssh to run cmd in oci vm, e.g. format block volume disks](./ssh%20remote%20run%20cmd%20and%20format%20blockvolume)
-- [oci sdk demo](./oci%20sdk%20demo)
+- [oci sdk demo for .net](./oci%20sdk%20demo)
