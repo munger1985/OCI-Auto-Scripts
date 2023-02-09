@@ -9,6 +9,7 @@ You have to setup related OCI CLI or SDK envrionment before running the code dir
 Follow the Oracle Offical documents about how to setup related envrionment.
 
 CLI setup: https://docs.oracle.com/en-us/iaas/Content/API/Concepts/cliconcepts.htm
+
 SDK setup: https://docs.oracle.com/en-us/iaas/Content/API/Concepts/sdks.htm
 
 You could also run these on CloudShell instead your own workstation/laptop.
