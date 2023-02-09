@@ -25,7 +25,8 @@ Here are the usecases covered by the scripts, we list these as scripts examples,
 - [Openshift Automatic Deployment on OCI VMs](./openshift/README.md)
 - [Add/update tags to OCI Resources ](./oci%20batch%20add%20tags)
 - [Format Block Volume Disks](./ssh%20remote%20run%20cmd%20and%20format%20blockvolume)
-- [OCI SDK .Net Sample Code](./oci%20sdk%20demo)
+- [OCI SDK .Net Sample Code](./oci%20.net%20sdk%20demo)
+- [Query Resources across OCI regions](/Query%20Resources%20Across%20Regions)
 
 # Contributing
 
