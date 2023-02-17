@@ -28,7 +28,7 @@ Here are the usecases covered by the scripts, we list these as scripts examples,
 - [Format Block Volume Disks](./ssh%20remote%20run%20cmd%20and%20format%20blockvolume)
 - [OCI SDK .Net Sample Code](./oci%20.net%20sdk%20demo)
 - [Query Resources across OCI regions](/Query%20Resources%20Across%20Regions)
-- [Curl simple test upload files to oci with s3 compatible api](./curl%20upload%20file%20to%20oci%20s3%20compatible%20bucket)
+- [Test uploading files to oci with s3 compatible API](./curl%20upload%20file%20to%20oci%20s3%20compatible%20bucket)
 
 # Contributing
 
