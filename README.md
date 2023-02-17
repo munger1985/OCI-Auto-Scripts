@@ -4,7 +4,7 @@ This repo is for collecting scripts when you use Oracle Cloud Infrastructure (OC
 
 The script could be writen based on OCI CLI command, or python/C#/Java code based on OCI SDK. 
 
-For the record, those tools and code are all for your reference, please test it and fit in your environment, we have **no** resposibility when you apply those tools or code.
+For the record, those tools and code are all for your reference, please test it and then fit in your environment, we have ***NO*** resposibility when you apply those tools or code.
 
 # Prerequisites
 
