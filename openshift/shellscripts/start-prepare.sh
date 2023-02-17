@@ -27,6 +27,7 @@ terraform init
 terraform apply --var-file=../terraform.tfvars  --auto-approve
 popd
 pushd master
+
 terraform init
 terraform apply --var-file=../terraform.tfvars  --auto-approve
 popd
