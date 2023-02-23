@@ -49,6 +49,7 @@ public class UploadObject {
 
 
     public static void mm( ) throws IOException {
+        // if use env vars, AWS_ACCESS_KEY_ID=xxx, AWS_SECRET_ACCESS_KEY=xxx
 //        Properties p =
 //                new Properties(System.getProperties());
 //        p.setProperty("aws.accessKeyId","5");
