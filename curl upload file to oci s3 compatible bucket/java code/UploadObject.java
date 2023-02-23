@@ -51,12 +51,12 @@ public class UploadObject {
     public static void mm( ) throws IOException {
 //        Properties p =
 //                new Properties(System.getProperties());
-//        p.setProperty("aws.accessKeyId","aab8501fa89616424ac7d7123ea8958c1ee8253a");
-//        p.setProperty("aws.secretAccessKey", "ugZQuW0svq15dwjtiABULNvwme2Xmgj9W+60yq4IneE=");
+//        p.setProperty("aws.accessKeyId","5");
+//        p.setProperty("aws.secretAccessKey", "5+60yq4IneE=");
 //        System.setProperties(p);
 //        BasicAWSCredentials awsCreds = new BasicAWSCredentials
-//                ("aab8501fa89616424ac7d7123ea8958c1ee8253a",
-//                        "ugZQuW0svq15dwjtiABULNvwme2Xmgj9W+60yq4IneE=");
+//                ("5",
+//                        "5+60yq4IneE=");
         Regions clientRegion = Regions.DEFAULT_REGION;
         String bucketName = "velero";
         String stringObjKeyName = "stryml";
