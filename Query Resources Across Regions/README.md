@@ -10,6 +10,6 @@ You could use this script (or variants ) on differnt scenarios , such as:
 Just modify the conf.yml to adjust parameters of your own.
 
 ## Example cmd
-###用法 ./query.sh 用户名 另存为文件名
-> ./query.sh 'oracleidentitycloudservice/wenbin.chen@oracle.com'  wenbin.chen.json
+### usage ./query.sh <username> <output file name>
+> ./query.sh 'oracleidentitycloudservice/usera@oraclecorp.com'  user1.output.json
 ###json to excel  https://jsongrid.com/json-grid
