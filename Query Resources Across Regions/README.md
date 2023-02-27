@@ -7,7 +7,7 @@ You could use this script (or variants ) on differnt scenarios , such as:
 > 2. When lots of resource are created by accidently or by hacker, you could list those resource and review before take futhure action.
 
 # Usage
-Just modify the conf.yml to adjust parameters of your own.
+Just modify the region list on query.sh to meet your requirements.
 
 ## Example cmd
 ### usage ./query.sh <username> <output file name>
