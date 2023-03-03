@@ -7,12 +7,9 @@ You could use this script (or variants ) on differnt scenarios , such as:
 > 2. When lots of resource are created by accidently or by hacker, you could list those resource and review before take futhure action.
 
 # Usage
-Just modify the conf.yml to adjust parameters of your own.
+Just modify the region list on query.sh to meet your requirements.
 
 ## Example cmd
-### can check help
-> java -jar solar.jar -h
-### find out those vms to delete
->  java -jar solar.jar    --delete --compartment  ocid1.compartment.oc1..sdw3kkj4q --freeTagKey Auto --freeTagValue 1
-### create those vms based on conf.yml
-> java -jar solar.jar   
+### usage ./query.sh <username> <output file name>
+> ./query.sh 'oracleidentitycloudservice/usera@oraclecorp.com'  user1.output.json
+###json to excel  https://jsongrid.com/json-grid
