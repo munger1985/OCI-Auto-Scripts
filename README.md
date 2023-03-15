@@ -32,6 +32,7 @@ Here are the usecases covered by the scripts, we list these as scripts examples,
 - [Query Resources across OCI regions](/Query%20Resources%20Across%20Regions)
 - [Test uploading files to oci with s3 compatible API](./curl%20upload%20file%20to%20oci%20s3%20compatible%20bucket)
 - [Python auth without oci sdk](./python%20auth%20without%20oci%20sdk)
+- [Use oci api in Openresty](./openresty%20oci%20api)
 # Contributing
 
 Contributions are what make the open source community such an amazing place to learn, inspire, and create. Any contributions you make are greatly appreciated.  The repo is maintained by Oracle China SEHub Solutions employees, but not related with Oracle offical obligation. 
