@@ -45,7 +45,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Properties;
 
-public class UploadObject {
+public class BatchDelete {
 
 
     public static void mm( ) throws IOException {
@@ -80,7 +80,7 @@ public class UploadObject {
 
                     List<DeleteObjectsRequest.KeyVersion> keysAndVersions = new ArrayList<>();
                     keysAndVersions.add(new DeleteObjectsRequest.KeyVersion("stryml"));
-                    keysAndVersions.add(new DeleteObjectsRequest.KeyVersion("my-object-2", "version-id-2"));ersion("stryml2"));
+                    keysAndVersions.add(new DeleteObjectsRequest.KeyVersion("my-object-2", "version-id-2"));
                     DeleteObjectsRequest deleteObjectsRequest = new DeleteObjectsRequest(bucketName)
                             .withKeys(keysAndVersions);
         
