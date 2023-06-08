@@ -16,7 +16,7 @@ namespace ListBucketsExample
     {
         private static IAmazonS3 _s3Client;
 
-     public   static async Task mm()
+        public static async Task mm()
         {
             // The client uses the AWS Region of the default user.
             // If the Region where the buckets were created is different,
@@ -30,6 +30,7 @@ namespace ListBucketsExample
                 ServiceURL = endpoint,
                 SignatureVersion = "3",
                 UseHttp = false,
+                ForcePathStyle = true
             };
             PutObjectRequest request = new PutObjectRequest
             {
@@ -38,7 +39,7 @@ namespace ListBucketsExample
                 ContentBody = "This is sample content...",
                 UseChunkEncoding = false
             };
-            IAmazonS3 s3Client    = new AmazonS3Client(accessKeyId, accessKeySecret, s3ClientConfig);
+            IAmazonS3 s3Client = new AmazonS3Client(accessKeyId, accessKeySecret, s3ClientConfig);
             var response = await GetBuckets(s3Client);
             DisplayBucketList(response.Buckets);
             // Put object
