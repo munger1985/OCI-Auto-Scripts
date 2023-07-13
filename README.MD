@@ -37,6 +37,7 @@ Here are the usecases covered by the scripts, we list these as scripts examples,
 - [prometheus oci exporter ](./oci_exporter)
 - [Many Tools OCI Image](./Many%20Useful%20Tools%20Custom%20Image--%20Gold%20Hundun)
 - [auto install management agent in windows](./auto%20install%20management%20agent%20in%20windows)
+- [java connect to adw ](./java_connect_adw)
 # Contributing
 
 Contributions are what make the open source community such an amazing place to learn, inspire, and create. Any contributions you make are greatly appreciated.  The repo is maintained by Oracle China SEHub Solutions employees, but not related with Oracle offical obligation. 
