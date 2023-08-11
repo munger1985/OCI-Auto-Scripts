@@ -185,7 +185,7 @@ func RegisterMetrics(reg prometheus.Registerer, metric metricDetail) *customProm
 func main() {
 	var (
 		addr       = flag.String("listen-address", ":8080", "The address to listen on for HTTP requests.")
-		configFile = flag.String("config", "C:\\Users\\opc\\.oci\\config", "The path to the oci api key config file.")
+		configFile = flag.String("config", "", "This is required! The path to the oci api key config file. windows: like -config C:\\Users\\opc\\.oci\\config; linux like: -config /home/opc/.oci/config")
 		//uniformDomain     = flag.Float64("uniform.domain", 0.0002, "The domain for the uniform distribution.")
 		//normDomain        = flag.Float64("normal.domain", 0.0002, "The domain for the normal distribution.")
 		//normMean          = flag.Float64("normal.mean", 0.00001, "The mean for the normal distribution.")
@@ -193,6 +193,11 @@ func main() {
 	)
 
 	flag.Parse()
+	if *configFile == "" {
+		fmt.Println("Error: Missing required flag -config")
+		flag.Usage()
+		os.Exit(1)
+	}
 	//data, err2 := os.ReadFile("metrics.yaml")
 	ss := "metrics.yaml"
 	//ss := "C:\\Users\\opc\\Downloads\\prometheus-2.43.0.windows-amd64\\client_golang\\examples\\random\\metrics.yaml"
