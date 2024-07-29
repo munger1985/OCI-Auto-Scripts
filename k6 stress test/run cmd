@@ -1,0 +1,1 @@
+k6  run --vus=66 --iterations 66   k6upload.js
