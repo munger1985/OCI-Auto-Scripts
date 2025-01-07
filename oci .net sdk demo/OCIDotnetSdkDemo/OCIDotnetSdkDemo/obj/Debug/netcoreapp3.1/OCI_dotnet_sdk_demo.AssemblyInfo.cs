@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("OCI_dotnet_sdk_demo")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+6a55cb06961b73ee3748c5abbc77cdb33a3b66f8")]
 [assembly: System.Reflection.AssemblyProductAttribute("OCI_dotnet_sdk_demo")]
 [assembly: System.Reflection.AssemblyTitleAttribute("OCI_dotnet_sdk_demo")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
