@@ -13,7 +13,7 @@
 #define RESPONSE_BUFFER_SIZE 2048
 #define PARURL "/p/2vEzkK2jOBYARprHnXvN0272zPC0H55RXRg4jwaJVP9FBfSlFT9CUH-jdWmWn1C6/n/sehubjapacprod/b/velero/o/"
 #define  HOST "objectstorage.ap-singapore-1.oraclecloud.com"
-int retry_count = 0;
+
 const int max_retries = 5;
 const int retry_interval = 2;  // Initial retry interval (seconds)
 
@@ -84,6 +84,7 @@ int upload_file_with_mbedtls(const char *file_path, const char *host) {
 
     size_t sent = 0;
     while (sent < strlen(request)) {
+        int retry_count = 0;
         int ret = mbedtls_ssl_write(&ssl, (const unsigned char *)(request + sent), strlen(request) - sent);
         while (retry_count < max_retries) {
             if (ret > 0) {
@@ -107,16 +108,25 @@ int upload_file_with_mbedtls(const char *file_path, const char *host) {
         sent = 0;
         while (sent < bytes_read) {
             int ret = mbedtls_ssl_write(&ssl, (const unsigned char *)(buffer + sent), bytes_read - sent);
-            if (ret > 0) {
-                sent += ret;
-            } else if (ret == MBEDTLS_ERR_SSL_WANT_READ || ret == MBEDTLS_ERR_SSL_WANT_WRITE) {
-                continue;
-            } else {
-                handle_error("Failed to send file content", ret);
-                fclose(file);
-                return -1;
+            int retry_count = 0;
+
+            while (retry_count < max_retries) {
+
+                    if (ret > 0) {
+                        sent += ret;
+                        break;
+                    } else if (ret == MBEDTLS_ERR_SSL_WANT_READ || ret == MBEDTLS_ERR_SSL_WANT_WRITE) {
+                        continue;
+                    } else {
+                        handle_error("Failed to send file content", ret);
+                        retry_count++;
+                        printf("Retrying in %d seconds...\n", retry_interval * retry_count);
+                        sleep(retry_interval * retry_count);
+                        fclose(file);
+                        return -1;
+                    }
+                }
             }
-        }
     }
 
     fclose(file);
