@@ -1,5 +1,3 @@
 is_global = true
 build_property.RootNamespace = OCI_dotnet_sdk_demo
-build_property.ProjectDir = c:\Users\opc\Documents\GitHub\OCI-Auto-Scripts\oci .net sdk demo\OCIDotnetSdkDemo\OCIDotnetSdkDemo\
-build_property.EnableComHosting = 
-build_property.EnableGeneratedComInterfaceComImportInterop = 
+build_property.ProjectDir = c:\Users\opc\Documents\GitHub\OCI-Auto-Scripts2\oci .net sdk demo\OCIDotnetSdkDemo\OCIDotnetSdkDemo\
