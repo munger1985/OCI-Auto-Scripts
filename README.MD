@@ -23,6 +23,7 @@ https://docs.oracle.com/en-us/iaas/Content/API/Concepts/devcloudshellintro.htm
 # Usecase List
 
 Here are the usecases covered by the scripts, we list these as scripts examples, and hope to give some rough idea on how to adjust the code to fit your real usecases.
+please search in this page by ctl+f, will not be listed below in the future.
 
 - [Create VMs and Attach New Block Volumes](./oci%20create%20vms%20attached%20bvs)
 - [Openshift Automatic Deployment on OCI VMs](./openshift/README.md)

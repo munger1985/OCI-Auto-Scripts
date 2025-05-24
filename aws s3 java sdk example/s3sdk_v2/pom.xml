@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>org.example</groupId>
+    <artifactId>javasdk</artifactId>
+    <version>1.0-SNAPSHOT</version>
+
+    <properties>
+        <!--        <maven.compiler.source>17</maven.compiler.source>-->
+        <!--        <maven.compiler.target>17</maven.compiler.target>-->
+        <sdk.version>3.65.1</sdk.version>
+        <maven.compiler.source>19</maven.compiler.source>
+        <maven.compiler.target>19</maven.compiler.target>
+    </properties>
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>com.oracle.oci.sdk</groupId>
+                <artifactId>oci-java-sdk-bom</artifactId>
+                <!-- replace the version below with your required version -->
+                <version>${sdk.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <dependency>
+                <groupId>com.oracle.oci.sdk</groupId>
+                <artifactId>oci-java-sdk-common-httpclient-jersey3</artifactId>
+                <version>${sdk.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+             </dependency>
+
+        </dependencies>
+    </dependencyManagement>
+    <dependencies>
+        <dependency>
+            <groupId>software.amazon.awssdk</groupId>
+            <artifactId>s3</artifactId>
+            <version>2.31.50</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.oracle.oci.sdk</groupId>
+            <artifactId>oci-java-sdk-generativeaiagent</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>com.oracle.oci.sdk</groupId>
+            <artifactId>oci-java-sdk-generativeaiagentruntime</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>com.oracle.oci.sdk</groupId>
+            <artifactId>oci-java-sdk-aispeech</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>com.oracle.oci.sdk</groupId>
+            <artifactId>oci-java-sdk-containerengine</artifactId>
+        </dependency>
+    <dependency>
+        <groupId>com.oracle.oci.sdk</groupId>
+        <artifactId>oci-java-sdk-audit</artifactId>
+    </dependency>
+    <dependency>
+        <groupId>com.oracle.oci.sdk</groupId>
+        <artifactId>oci-java-sdk-core</artifactId>
+    </dependency>
+        <dependency>
+            <groupId>com.oracle.oci.sdk</groupId>
+            <artifactId>oci-java-sdk-common</artifactId>
+        </dependency>
+
+<!--    <dependency>-->
+<!--        <groupId>com.oracle.oci.sdk</groupId>-->
+<!--        <artifactId>oci-java-sdk-database</artifactId>-->
+<!--    </dependency>-->
+        <dependency>
+            <groupId>com.oracle.oci.sdk</groupId>
+            <artifactId>oci-java-sdk-monitoring</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.oracle.oci.sdk</groupId>
+            <artifactId>oci-java-sdk-aispeech</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.eclipse.jetty.websocket</groupId>
+            <artifactId>websocket-server</artifactId>
+            <version>9.4.53.v20231009</version>
+        </dependency>
+
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>3.8.2</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>RELEASE</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.oracle.oci.sdk</groupId>
+            <artifactId>oci-java-sdk-objectstorage</artifactId>
+        </dependency>
+        <dependency>
+            <!-- Since this is the "application" pom.xml, we do want to
+                 choose the httpclient to use. -->
+            <groupId>com.oracle.oci.sdk</groupId>
+            <artifactId>oci-java-sdk-common-httpclient-jersey3</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.oracle.oci.sdk</groupId>
+            <artifactId>oci-java-sdk-addons-apache-configurator-jersey3</artifactId>
+        </dependency>
+<!--        <dependency>-->
+<!--            <groupId>com.oracle.oci.sdk</groupId>-->
+<!--            <artifactId>oci-java-sdk-addons-oke-workload-identity</artifactId>-->
+<!--            <version>2.56.0</version>-->
+<!--        </dependency>-->
+
+                 <dependency>
+        			<groupId>com.oracle.oci.sdk</groupId>
+        			<artifactId>oci-java-sdk-aidocument</artifactId>
+        		</dependency>
+    </dependencies>
+    <build>
+        <plugins>
+            <!-- 此插件必须放在父 POM 中  -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <version>3.3.0</version>
+                <executions>
+                    <!--
+                    执行本插件的方法为，在主目录下执行如下命令：
+                    mvn package assembly:single
+
+                    对于 IntelliJ IDEA，生成的 JAR 包位于每个模块下的文件夹 target
+                    -->
+                    <execution>
+                        <id>make-assembly</id>
+                        <phase>package</phase>
+                        <goals>
+                            <!-- 此处 IntelliJ IDEA 可能会报红，这是正常现象  -->
+                            <goal>single</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <!-- 配置程序运行入口所在的类 -->
+                            <mainClass>FFF2</mainClass>
+                        </manifest>
+                    </archive>
+                    <!-- 设置 JAR 包输出目录 -->
+                    <outputDirectory>${project.build.directory}/maven-assembly-plugin</outputDirectory>
+                    <!-- 设置打包后的 JAR 包的目录结构为默认 -->
+                    <descriptorRefs>
+                        <descriptorRef>jar-with-dependencies</descriptorRef>
+                    </descriptorRefs>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>
