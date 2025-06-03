@@ -14,4 +14,4 @@
 config['region']='ap-melbourne-1'
 ```
 
-![image](/ssbackup.png)
+![image](./ssbackup.png)
