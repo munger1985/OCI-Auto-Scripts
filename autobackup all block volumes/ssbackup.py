@@ -3,10 +3,9 @@ import oci
 config = oci.config.from_file()
 from oci.identity import IdentityClient
 config['region']='us-sanjose-1'
-config['region']='ap-melbourne-1'
+# config['region']='ap-melbourne-1'
 block_storage_client = oci.core.BlockstorageClient(config)
 identity_client = IdentityClient(config)
-volume_ocid =  'ocid1.bootvolume.oc1.us-sanjose-1.abzwuljr2zf6vjljicbca6jqqxedj7t35x67sxl5jnscm2wwwku53qcc6xtq'
 policy_name_to_id = { }
 import streamlit as st 
 
@@ -23,7 +22,6 @@ def get_region_backup_policy(  ):
     ).data
     policy_id = None
     for policy in policies:
-        # if policy.display_name == "bronze":
             policy_id = policy.id
             policy_name_to_id[policy.display_name]=policy_id
             # break
@@ -36,7 +34,6 @@ policy_name_to_id= get_region_backup_policy()
 tenancy_id = config["tenancy"]
 policy_names =policy_name_to_id.keys()
 
-# @st.cache_data(ignore_args=["identity_client"])
 def get_compartments(identity_client,compartment_id):
     compartments = []
     response = identity_client.list_compartments(compartment_id)
@@ -74,24 +71,10 @@ def list_volumes_in_compartment(compartment_id):
     volume_names = [v.display_name for v in all_v]
     return all_v,volume_names
 volumes,volume_names = list_volumes_in_compartment( compartment_id= selected_compartment_id)
-# for volume in volumes:
-#     policy_id = get_volume_policy(blockstorage_client, volume.id)
-#     if policy_id in policy_name_to_id.values():
-#         policy_name = next(name for name, pid in policy_name_to_id.items() if pid == policy_id)
-#         policy_assignments[volume.display_name] = policy_name
-#     else:
-#         policy_assignments[volume.display_name] = None
-
-# Filter to keep only volumes with a backup policy
 
 
 # Fetch backup policies from the root compartment
 root_compartment_id = tenancy_id
-# backup_policies = block_storage_client.list_volume_backup_policies(compartment_id=root_compartment_id).data
-# print(12333,backup_policies)
-# policy_names = [p.display_name for p in backup_policies if p.display_name in ["bronze", "silver", "gold"]]
-# policy_name_to_id = {p.display_name: p.id for p in backup_policies if p.display_name in ["bronze", "silver", "gold"]}
-# Function to get the backup policy for a volume
 @st.cache_data
 def get_volume_policy( volume_id):
     try:
@@ -208,5 +191,3 @@ def assign_backup_policy(block_storage_client, volume_ocid, policy_id):
             assignment_details
         )
         print(f"Successfully assigned 'Bronze' policy to volume: {response.data.id}")
-
-# assign_backup_policy(block_storage_client, volume_ocid, policy_id)
