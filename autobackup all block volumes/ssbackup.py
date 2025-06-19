@@ -1,13 +1,26 @@
 # use streamlit to list all volumes in a oci compartment
 import oci
-config = oci.config.from_file()
+import streamlit as st 
+
 from oci.identity import IdentityClient
-config['region']='us-sanjose-1'
-# config['region']='ap-melbourne-1'
+from oci.regions import REGIONS
+
+config = oci.config.from_file()
+
+
+
+region_list = [r for r in REGIONS]
+st.sidebar.header("Select Region")  
+
+selected_region = st.sidebar.selectbox("Region", region_list, index=0)
+st.session_state.selected_region = selected_region
+print(selected_region)
+config['region'] = selected_region
+
+
 block_storage_client = oci.core.BlockstorageClient(config)
 identity_client = IdentityClient(config)
 policy_name_to_id = { }
-import streamlit as st 
 
 if "selected_volumes" not in st.session_state:
     st.session_state.selected_volumes = []
@@ -60,7 +73,7 @@ selected_compartment_name = st.sidebar.selectbox("Compartment", list(compartment
 selected_compartment_id = compartment_dict[selected_compartment_name]
 
 # Fetch volumes in the selected compartment
-@st.cache_data
+# @st.cache_data
 def list_volumes_in_compartment(compartment_id):
     print('list vol')
     st.session_state.selected_volumes=[]
@@ -74,11 +87,11 @@ volumes,volume_names = list_volumes_in_compartment( compartment_id= selected_com
 
 
 # Fetch backup policies from the root compartment
-root_compartment_id = tenancy_id
+# root_compartment_id = tenancy_id
 @st.cache_data
 def get_volume_policy( volume_id):
     try:
-        print('get vol policy')
+        print('get vol policy',volume_id)
         assignment = block_storage_client.get_volume_backup_policy_asset_assignment(asset_id=volume_id).data
         if assignment:
             return assignment[0].policy_id
@@ -141,7 +154,7 @@ with col2:
                     block_storage_client.create_volume_backup_policy_assignment(assignment_details)
                 st.success(f"Assigned {selected_policy} policy to selected volumes")
                         # 清除所有数据缓存
-                list_volumes_in_compartment.clear()
+                # list_volumes_in_compartment.clear()
                 get_volume_policy.clear()
                 # 或仅清除特定函数缓存：load_data.clear()
             else:
