@@ -102,13 +102,15 @@ def get_volume_policy( volume_id):
 # Determine policy assignments for each volume
 policy_assignments = {}
 for volume in volumes:
-    policy_id = get_volume_policy(  volume.id)
+    if hasattr(volume, "lifecycle_state") and volume.lifecycle_state == "TERMINATED":
+        continue
+    policy_id = get_volume_policy(volume.id)
     if policy_id in policy_name_to_id.values():
         policy_name = next(name for name, pid in policy_name_to_id.items() if pid == policy_id)
         policy_assignments[volume.display_name] = policy_name
     else:
         policy_assignments[volume.display_name] = None
-volume_names = [name for name in volume_names if policy_assignments[name] is   None]
+volume_names = [name for name in volume_names if name in policy_assignments and  policy_assignments[name] is   None ]
 volume_name_to_id = {v.display_name: v.id for v in volumes}
 # Categorize volumes by policy
 gold_volumes = [name for name, policy in policy_assignments.items() if policy == "gold"]
@@ -117,20 +119,23 @@ bronze_volumes = [name for name, policy in policy_assignments.items() if policy 
 
 # Display layout with two main columns
 col1, col2 = st.columns([3, 1])  # Left column wider for multiselect, right for button and policy display
-
+st.session_state.multi_key = len(volume_names)
 # Left column: Multiselect for volumes
+st.session_state.selected_volumes = volume_names
 with col1:
     st.header(f"Volumes in {selected_compartment_name}")
     if volume_names:
-         st.session_state.selected_volumes = st.multiselect("Select volumes to assign policy", volume_names,default=st.session_state.selected_volumes )
+         st.session_state.selected_volumes = st.multiselect("Select volumes to assign policy", volume_names,default=st.session_state.selected_volumes ,
+                                                             
+        )
       
 
     else:
         st.write("No volumes in this compartment")
         selected_volumes = []
-    if st.button("Double Click：Select all"):
+    if st.button("Click：Select all"):
                 st.session_state.selected_volumes = volume_names
-                print(st.session_state.selected_volumes)
+                print('select all: ',st.session_state.selected_volumes)
 # Right column: Policy selection and Assign button
 with col2:
     st.header("Policy Assignment")
