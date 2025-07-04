@@ -5,17 +5,32 @@ import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.core.ResponseBytes;
 import software.amazon.awssdk.core.sync.RequestBody;
+import software.amazon.awssdk.core.sync.ResponseTransformer;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.S3Configuration;
 import software.amazon.awssdk.services.s3.model.*;
+import software.amazon.awssdk.services.s3.presigner.S3Presigner;
+import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest;
+import software.amazon.awssdk.services.s3.presigner.model.PresignedGetObjectRequest;
+import software.amazon.awssdk.services.s3.presigner.model.PresignedPutObjectRequest;
+import software.amazon.awssdk.services.s3.presigner.model.PresignedUploadPartRequest;
+import software.amazon.awssdk.services.s3.presigner.model.PutObjectPresignRequest;
+import software.amazon.awssdk.services.s3.presigner.model.UploadPartPresignRequest;
 
+import java.util.Arrays;
 import java.io.*;
+import java.net.HttpURLConnection;
 import java.net.URI;
+import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.*;
 
 import org.junit.jupiter.api.Test;
@@ -27,21 +42,27 @@ import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamWriter;
 
 import static org.junit.jupiter.api.Assertions.*;
-public class S3SdkTestAll {
+
+public class S3SdkTest {
     S3Client s3;
     String bucketName = "velero";
     String objectKey = "1.mp4";
-    String filePath = "C:\\1.mp4";
+    String filePath = "/Users/luka/Downloads/1.mp4";
+    String smallFilePath = "/Users/luka/Downloads/Oracle_Document.pdf";
+    String deleteObject = "8.terraform-modules.pdf";
+    String headObject = "thumb.xml";
+    String UploadPartPresignedUrl_key = "test_part_upload.pptx";
+    String UploadPartPresignedUrl_path = "/Users/luka/Downloads/test_part_upload.pptx";
     String regionStr = "ap-singapore-1";
-@BeforeEach
-public   void init() {
 
-    String endpoint = "https://sehubjapacprod.compat.objectstorage.ap-singapore-1.oraclecloud.com";
-    String accessKey = "aab8501fa89616424ac7d7123ea8958c1ee8253a";
-    String secretKey = "ugZQuW0svq15dwjtiABULNvwme2Xmgj9W+60yq4IneE=";
+    @BeforeEach
+    public void init() {
+        String endpoint = "https://sehubjapacprod.compat.objectstorage.ap-singapore-1.oraclecloud.com";
+        String accessKey = "AKAK";
+        String secretKey = "SKSK+60yq4IneE=";
 
 
-    s3 = S3Client.builder()
+        s3 = S3Client.builder()
             .endpointOverride(URI.create(endpoint))
             .region(Region.of(regionStr))
             .credentialsProvider(StaticCredentialsProvider.create(
@@ -52,46 +73,14 @@ public   void init() {
                             .checksumValidationEnabled(false)
                             .build())
             .build();
-}
-
-    private String buildDeleteXml(List<ObjectIdentifier> objects) {
-        try {
-            StringWriter stringWriter = new StringWriter();
-            XMLOutputFactory outputFactory = XMLOutputFactory.newInstance();
-            outputFactory.setProperty(XMLOutputFactory.IS_REPAIRING_NAMESPACES, true);
-
-            XMLStreamWriter writer = outputFactory.createXMLStreamWriter(stringWriter);
-
-            writer.writeStartDocument("1.0");
-            writer.writeStartElement("Delete");
-
-            for (ObjectIdentifier object : objects) {
-                writer.writeStartElement("Object");
-                writer.writeStartElement("Key");
-                writer.writeCharacters(object.key());
-                writer.writeEndElement(); // Key
-                writer.writeEndElement(); // Object
-            }
-
-            writer.writeEndElement(); // Delete
-            writer.writeEndDocument();
-            writer.close();
-
-            return stringWriter.toString();
-        } catch (XMLStreamException e) {
-            throw new RuntimeException("Error generating XML for batch delete", e);
-        }
     }
-    private String calculateContentMd5(String content) {
-        byte[] md5 = Md5Utils.computeMD5Hash(content.getBytes(StandardCharsets.UTF_8));
-        return BinaryUtils.toBase64(md5);
-    }
+
     @Test
     /**
      * say we have 1.mp4 and test.txt in the bucket, we want to delete them both.
      */
     void testBatchDelete() throws Exception {
-        List<String> keysToDelete = List.of("1.mp4", "test.txt");
+        List<String> keysToDelete = Arrays.asList("1.mp4", "test.txt");
 
 
         List<String> failedKeys=new ArrayList<>();
@@ -283,75 +272,320 @@ public   void init() {
 
     }
 
-    public static void main(String[] args) throws IOException {
-        // OCI 兼容 S3 的 endpoint，例如：https://<namespace>.compat.objectstorage.<region>.oraclecloud.com
-        String endpoint = "https://sehubjapacprod.compat.objectstorage.ap-singapore-1.oraclecloud.com";
-        String accessKey = "aab8501fa89616424ac7d7123ea8958c1ee8253a";
-        String secretKey = "ugZQuW0svq15dwjtiABULNvwme2Xmgj9W+60yq4IneE=";
-        String bucketName = "velero";
-        String objectKey = "test.txt";
-        String filePath = "C:\\c.cc";
-        String regionStr = "ap-singapore-1";
-
-        S3Client s3 = S3Client.builder()
-                .endpointOverride(URI.create(endpoint))
-                .region(Region.of(regionStr))
-                .credentialsProvider(StaticCredentialsProvider.create(
-                        AwsBasicCredentials.create(accessKey, secretKey)))
-                .forcePathStyle(true)
-                .serviceConfiguration(
-                        S3Configuration.builder()
-                                .checksumValidationEnabled(false)
-                                .build())
-                                .build();
-
-        PutObjectRequest putObjectRequest = PutObjectRequest.builder()
-                .bucket(bucketName)
-                .key(objectKey)
-                .build();
-
- ///// / write string to the file directly
+    @Test
+    void testPutObject(){
         PutObjectResponse response = s3.putObject(
-                putObjectRequest,
-                RequestBody.fromString("write str to it ") // 直接从内存上传
+                PutObjectRequest.builder()
+                .bucket(bucketName)
+                .key("Oracle_Document.pdf_by_putObject")
+                .contentType("text/plain") // 显式设置 MIME 类型
+                .build(),
+                RequestBody.fromFile(Paths.get(smallFilePath))
+            );
+
+            System.out.println("上传成功! ETag: " + response.eTag());
+
+    }
+    @Test
+    void testListObjects() {
+        ListObjectsV2Response response = s3.listObjectsV2(ListObjectsV2Request.builder()
+                .bucket(bucketName)
+                .build());
+        System.out.println("Bucket 中的对象列表:");
+        response.contents().forEach(obj -> System.out.println(" - " + obj.key()));
+    }
+
+    @Test
+    void TestDeleteObject() {
+        s3.deleteObject(DeleteObjectRequest.builder()
+                .bucket(bucketName)
+                .key(deleteObject)
+                .build());
+        System.out.println("删除成功: " + deleteObject);
+    }
+
+    @Test
+    void testGetObject() {
+        ResponseBytes<GetObjectResponse> objectBytes = s3.getObject(
+                GetObjectRequest.builder()
+                        .bucket(bucketName)
+                        .key(headObject)
+                        .build(),
+                ResponseTransformer.toBytes()
+        );
+        String content = objectBytes.asUtf8String();
+        System.out.println("文件下载完成: ");
+    }
+
+    @Test
+    void testHeadObject(){
+        // 获取对象元数据
+        HeadObjectResponse headResponse = s3.headObject(
+            HeadObjectRequest.builder()
+                .bucket(bucketName)
+                .key(headObject)
+                .build()
         );
 
+        // 提取元数据
+        long fileSize = headResponse.contentLength(); // 文件大小（字节）
+        Instant lastModified = headResponse.lastModified(); // 最后修改时间
+        String eTag = headResponse.eTag(); // 文件的ETag（哈希值）
+        String contentType = headResponse.contentType(); // MIME类型（如text/plain）
 
-/////  write file to the bucket
-        PutObjectRequest putObjectRequest2 = PutObjectRequest.builder()
-                .bucket(bucketName)
-                .key(objectKey)
+        System.out.println("文件元数据:");
+        System.out.println(" - 大小: " + fileSize + " bytes");
+        System.out.println(" - 最后修改时间: " + lastModified);
+        System.out.println(" - ETag: " + eTag);
+        System.out.println(" - Content-Type: " + contentType);
+    }
+
+    @Test
+    void testGenerateGetPresignedUrl() {
+        S3Presigner presigner = S3Presigner.builder()
+                .endpointOverride(s3.serviceClientConfiguration().endpointOverride().orElse(null))
+                .credentialsProvider(s3.serviceClientConfiguration().credentialsProvider())
+                .region(s3.serviceClientConfiguration().region())
+                .serviceConfiguration(S3Configuration.builder().pathStyleAccessEnabled(true).build())
                 .build();
-        PutObjectResponse response2 = s3.putObject(putObjectRequest2, Paths.get(filePath));
 
-/////   write bytearray to the bucket
-//        byte[] imageBytes = Files.readAllBytes(Paths.get("C:\\a.png"));
-//        PutObjectResponse response3 = s3.putObject(
-//                putObjectRequest,
-//                RequestBody.fromBytes(imageBytes) // Upload byte array directly
-//        );
-/////        System.out.println("上传完成，ETag: " + response.eTag());
+        PresignedGetObjectRequest presignedRequest = presigner.presignGetObject(
+                GetObjectPresignRequest.builder()
+                        .signatureDuration(Duration.ofMinutes(10))  
+                        .getObjectRequest(GetObjectRequest.builder()
+                                .bucket(bucketName)
+                                .key("apache-tomcat.zip")
+                                .build())
+                        .build());
 
-/////   download as bytearray
-        GetObjectRequest getObjectRequest = GetObjectRequest.builder()
-                .bucket(bucketName)
-                .key("test.txt")
+        presigner.close();
+        System.out.println("OCI 预签名下载URL: " + presignedRequest.url().toString());
+    }        
+
+    @Test
+    void testGeneratePutPresignedUrl() {
+        S3Presigner presigner = S3Presigner.builder()
+                .endpointOverride(s3.serviceClientConfiguration().endpointOverride().orElse(null))
+                .credentialsProvider(s3.serviceClientConfiguration().credentialsProvider())
+                .region(s3.serviceClientConfiguration().region())
+                .serviceConfiguration(S3Configuration.builder().pathStyleAccessEnabled(true).build())
                 .build();
 
-        // 下载为字节数组
-        ResponseBytes<GetObjectResponse> objectBytes = s3.getObjectAsBytes(getObjectRequest);
-        byte[] data = objectBytes.asByteArray();
+        PresignedPutObjectRequest presignedRequest = presigner.presignPutObject(
+            PutObjectPresignRequest.builder()
+                .signatureDuration(Duration.ofMinutes(15))
+                .putObjectRequest(PutObjectRequest.builder()
+                    .bucket(bucketName)
+                    .key("Oracle_Document.pdf_by_presignPutObject")
+                    .contentType("application/octet-stream") // 强制二进制流类型
+                    .build())
+                .build());
 
-        String text = new String(data, java.nio.charset.StandardCharsets.UTF_8);
-        System.out.println("file content "+text);
+        String presignedUrl = presignedRequest.url().toString();
+        System.out.println("OCI 预签名上传URL: \n" + presignedUrl);
 
-//////  download as a file
-        GetObjectRequest getObjectRequest3 = GetObjectRequest.builder()
-                .bucket(bucketName)
-                .key("test.txt")
+        Path file = Paths.get(smallFilePath);
+        try {
+            File file1 = file.toFile();
+            URL url = new URL(presignedUrl);
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            
+            // 配置请求
+            conn.setRequestMethod("PUT");
+            conn.setDoOutput(true);
+            conn.setRequestProperty("Content-Type", "application/octet-stream");
+            
+            // 上传文件流
+            try (FileInputStream fis = new FileInputStream(file1);
+                 OutputStream os = conn.getOutputStream()) {
+                byte[] buffer = new byte[8192];
+                int bytesRead;
+                while ((bytesRead = fis.read(buffer)) != -1) {
+                    os.write(buffer, 0, bytesRead);
+                }
+            }
+            // 获取响应状态码
+            int statusCode = conn.getResponseCode();
+            System.out.println("上传状态码: " + statusCode); // 成功返回 200
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        //验证上传本地文件（需安装 curl）curl -X PUT --upload-file "localfile.txt" -H "Content-Type: application/octet-stream" url
+        presigner.close();
+    }
+
+    @Test
+    void testGenerateUploadPartPresignedUrl(){
+        String object_key = UploadPartPresignedUrl_key;
+        try {
+            // 1. 初始化分片上传
+            String uploadId = initMultipartUpload(s3, bucketName, object_key);
+            System.out.println("Upload ID: " + uploadId);
+
+            // 2. 生成分片预签名URL
+            int partNumber = 1;
+            String presignedUrl = generatePartPresignedUrl(
+                s3, 
+                bucketName, 
+                object_key, 
+                uploadId, 
+                partNumber, 
+                1, // 有效期1小时
+                TimeUnit.HOURS
+            );
+            System.out.println("Part " + partNumber + " Presigned URL: \n" + presignedUrl);
+
+            // 3. 实际上传分片并获取真实ETag
+            String eTag = uploadPartAndGetETag(presignedUrl);
+            System.out.println("Part " + partNumber + " ETag: " + eTag);
+
+            // 4. 验证分片是否上传成功
+            if (verifyPartUpload(s3, bucketName, object_key, uploadId, partNumber, eTag)) {
+                // 5. 完成分片上传
+                List<CompletedPart> completedParts = new ArrayList<>();
+                completedParts.add(CompletedPart.builder()
+                    .partNumber(partNumber)
+                    .eTag(eTag)
+                    .build());
+
+                completeMultipartUpload(s3, bucketName, object_key, uploadId, completedParts);
+            } else {
+                System.err.println("分片验证失败，请检查上传情况");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            s3.close();
+        }
+    }
+
+    private static String initMultipartUpload(S3Client s3Client, String bucket, String key) {
+        CreateMultipartUploadRequest request = CreateMultipartUploadRequest.builder()
+            .bucket(bucket)
+            .key(key)
+            .build();
+        return s3Client.createMultipartUpload(request).uploadId();
+    }
+
+    private static String generatePartPresignedUrl(
+            S3Client s3Client, String bucket, String key, 
+            String uploadId, int partNumber, 
+            long expiry, TimeUnit timeUnit) {
+        
+        S3Presigner presigner = S3Presigner.builder()
+            .endpointOverride(s3Client.serviceClientConfiguration().endpointOverride().orElse(null))
+            .credentialsProvider(s3Client.serviceClientConfiguration().credentialsProvider())
+            .region(s3Client.serviceClientConfiguration().region())
+            .serviceConfiguration(S3Configuration.builder().pathStyleAccessEnabled(true).build())
+            .build();
+
+        UploadPartRequest uploadPartRequest = UploadPartRequest.builder()
+            .bucket(bucket)
+            .key(key)
+            .uploadId(uploadId)
+            .partNumber(partNumber)
+            .build();
+
+        PresignedUploadPartRequest presignedRequest = presigner.presignUploadPart(
+            UploadPartPresignRequest.builder()
+                .signatureDuration(Duration.ofHours(expiry))
+                .uploadPartRequest(uploadPartRequest)
+                .build());
+
+        presigner.close();
+        return presignedRequest.url().toString();
+    }
+
+    private String uploadPartAndGetETag(String presignedUrl) {
+        String filePath = UploadPartPresignedUrl_path;
+        Path file = Paths.get(filePath);
+        
+        try {
+            URL url = new URL(presignedUrl);
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            
+            // 配置请求
+            conn.setRequestMethod("PUT");
+            conn.setDoOutput(true);
+            conn.setRequestProperty("Content-Type", "application/octet-stream");
+            
+            // 上传文件流
+            try (FileInputStream fis = new FileInputStream(file.toFile());
+                 OutputStream os = conn.getOutputStream()) {
+                byte[] buffer = new byte[8192];
+                int bytesRead;
+                while ((bytesRead = fis.read(buffer)) != -1) {
+                    os.write(buffer, 0, bytesRead);
+                }
+            }
+            
+            // 获取响应状态码和ETag
+            int statusCode = conn.getResponseCode();
+            String eTag = conn.getHeaderField("ETag");
+            
+            if (statusCode == 200 && eTag != null) {
+                // 移除ETag中的双引号
+                return eTag.replace("\"", "");
+            } else {
+                throw new RuntimeException("上传失败，状态码: " + statusCode);
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("分片上传失败", e);
+        }
+    }
+
+    private static boolean verifyPartUpload(S3Client s3Client, String bucket, String key, 
+                                         String uploadId, int partNumber, String expectedETag) {
+        try {
+            ListPartsRequest listRequest = ListPartsRequest.builder()
+                .bucket(bucket)
+                .key(key)
+                .uploadId(uploadId)
                 .build();
-        String downloadPath = "C:\\Users\\qq\\Downloads\\test.txt";
-        s3.getObject(getObjectRequest3, Paths.get(downloadPath));
 
+            List<Part> parts = s3Client.listParts(listRequest).parts();
+            for (Part part : parts) {
+                if (part.partNumber() == partNumber) {
+                    String actualETag = part.eTag().replace("\"", "");
+                    if (actualETag.equals(expectedETag)) {
+                        System.out.println("分片验证成功");
+                        return true;
+                    } else {
+                        System.err.println("ETag不匹配，预期: " + expectedETag + "，实际: " + actualETag);
+                        return false;
+                    }
+                }
+            }
+            System.err.println("未找到指定分片");
+            return false;
+        } catch (Exception e) {
+            System.err.println("验证分片时出错: " + e.getMessage());
+            return false;
+        }
+    }
+
+    private static void completeMultipartUpload(
+            S3Client s3Client, String bucket, String key, 
+            String uploadId, List<CompletedPart> parts) {
+        
+        try {
+            CompletedMultipartUpload completedUpload = CompletedMultipartUpload.builder()
+                .parts(parts)
+                .build();
+
+            CompleteMultipartUploadRequest completeRequest = CompleteMultipartUploadRequest.builder()
+                .bucket(bucket)
+                .key(key)
+                .uploadId(uploadId)
+                .multipartUpload(completedUpload)
+                .build();
+
+            CompleteMultipartUploadResponse response = s3Client.completeMultipartUpload(completeRequest);
+            System.out.println("分片上传完成！对象ETag: " + response.eTag());
+        } catch (S3Exception e) {
+            System.err.println("完成分片上传失败: " + e.awsErrorDetails().errorMessage());
+            throw e;
+        }
     }
 }
