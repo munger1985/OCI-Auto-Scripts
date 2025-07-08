@@ -290,9 +290,16 @@ public class S3SdkTest {
     void testListObjects() {
         ListObjectsV2Response response = s3.listObjectsV2(ListObjectsV2Request.builder()
                 .bucket(bucketName)
+                        .prefix("ff")
+                .delimiter("/")  ///  split common prefix for objects
                 .build());
-        System.out.println("Bucket 中的对象列表:");
+        System.out.println("Bucket objects");
         response.contents().forEach(obj -> System.out.println(" - " + obj.key()));
+        System.out.println("Bucket prefixes:");
+
+        for (CommonPrefix prefix : response.commonPrefixes()) {
+            System.out.println(" - " + prefix.prefix());
+        }
     }
 
     @Test
