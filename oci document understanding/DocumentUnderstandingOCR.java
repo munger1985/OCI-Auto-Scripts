@@ -19,7 +19,7 @@ public class DuTest {
     @Test
     public void testOcrBucketFile() throws IOException {
 
-        // 1. the file location in your bucket
+        // file location in bucket
         String ns = "sehubjapacprod";
         String bucket = "velero";
         String outputPrefix = "output";
@@ -29,14 +29,11 @@ public class DuTest {
         ConfigFileAuthenticationDetailsProvider provider =
                 new ConfigFileAuthenticationDetailsProvider("~/.oci/config", "DEFAULT");
 
-        // 2. 创建客户端
         AIServiceDocumentClient client =      AIServiceDocumentClient.builder().build(provider);
         client.setRegion(Region.AP_CHUNCHEON_1);
-        // 3. 读取图片并Base64编码
         ArrayList<DocumentFeature> featureArrayList = new ArrayList<>();
 //        new DocumentFeature().
         featureArrayList.add(new DocumentTextExtractionFeature(false) );
-        // 4. 构建请求
         AnalyzeDocumentRequest request = AnalyzeDocumentRequest.builder()
                 .analyzeDocumentDetails(
                         AnalyzeDocumentDetails.builder()
