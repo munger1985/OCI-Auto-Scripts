@@ -19,7 +19,7 @@ public class DuTest {
     @Test
     public void testOcrBucketFile() throws IOException {
 
-        // 1. 认证
+        // 1. the file location in your bucket
         String ns = "sehubjapacprod";
         String bucket = "velero";
         String outputPrefix = "output";
