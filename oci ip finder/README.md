@@ -1,8 +1,8 @@
-# intro
+# Intro
 
 Here are some code for reference to search IP resource on OCI
 
-## globalIPFinder is search all your region ip from OCI, will take longer time but it would not miss the required IP. 
+## globalIPFinder is to search all your region ip from OCI, will take longer time but it would not miss the required IP. 
 
 ### usage
 
@@ -14,7 +14,7 @@ it uses llm and ip-api to get the possible region of the ip, and search the resu
 
 ### usage
 
-input compartmentID in python file, and use ip as command line arguments, when you run it will prompt you need to run python  singleFileSmartFinder.py   <IP address>.
+input compartmentID in python file, and use ip as command line arguments, when you run it will prompt that you  need to run python  singleFileSmartFinder.py   **IP address**
 
 
 # auth
