@@ -53,7 +53,9 @@ class OCIIPResourceFinder:
         promptTemplate=PromptTemplate(template=intentP, input_variables=["regions", "city"])
         chain =promptTemplate|self.chat
         response = chain.invoke({"regions":REGIONS, "city":city})
-        return [response.content.strip()]
+        import ast
+        regionList = ast.literal_eval(response.content.strip())
+        return regionList
 
     def search_resources(self, ip: str) -> Dict:
         """根据 IP 地址搜索 OCI 资源"""
