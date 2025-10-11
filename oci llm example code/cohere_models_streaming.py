@@ -4,6 +4,7 @@ import oci
 compartment_id = "ocid1.compartment.oc1..aaaaaaaau5q457a7teqkjce4oenoiz6bmc4g3s74a5543iqbm7xwplho44fq"
 CONFIG_PROFILE = "DEFAULT"
 config = oci.config.from_file('~/.oci/config', CONFIG_PROFILE)
+model_id="cohere.command-a-03-2025"
 
 region = 'us-chicago-1'
 # Service endpoint
@@ -30,7 +31,7 @@ chat_request.is_stream = True
 
 
 
-chat_detail.serving_mode = oci.generative_ai_inference.models.OnDemandServingMode(model_id="cohere.command-a-03-2025")
+chat_detail.serving_mode = oci.generative_ai_inference.models.OnDemandServingMode(model_id=model_id)
 chat_detail.chat_request = chat_request
 chat_detail.compartment_id = compartment_id
 
