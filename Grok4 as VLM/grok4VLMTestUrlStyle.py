@@ -15,20 +15,7 @@ generative_ai_inference_client = oci.generative_ai_inference.GenerativeAiInferen
 
 ModelID = "xai.grok-4"
 
-prompt = """
-You are a vision-based text extractor. Given an image, output ONLY a single JSON string containing all most-likely VINs (Vehicle Identification Numbers) found in the image. Follow these rules:
 
-1. Output exactly one JSON in the format:
-   {"vins":[{"vin":"<VIN1>","confidence":0.95}, {"vin":"<VIN2>","confidence":0.72}]}
-
-2. Only include candidates that are 17 characters after normalization, uppercase, and do NOT contain letters I, O, Q. If none found, output {"vins":[]}.
-
-3. Confidence must be a float between 0.00 and 1.00 (two decimals). Compute confidence from OCR character confidence, character plausibility, checksum/position cues if available, and visual clarity. Sort candidates by descending confidence. Limit output to top 5.
-
-4. You may apply conservative OCR-corrections (e.g., ambiguous '1' vs 'I', '0' vs 'O') but only output corrected VINs that meet the 17-char/no-I/O/Q rule and with reduced confidence reflecting the correction.
-
-
-"""
 
 prompt='describe this picture'
 
