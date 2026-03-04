@@ -21,8 +21,8 @@ export OCI_CLI_SUPPRESS_FILE_PERMISSIONS_WARNING=True
 # Root compartment to start from.
 # - If you want the whole tenancy, keep it as the tenancy OCID.
 # - If you want only a subtree, set it to that compartment OCID (will include all descendants).
-# ROOT_COMPARTMENT_OCID="ocid1.tenancy.oc1..aaaaaaaaaxpdh4jwbujm65yzec2rlt3zkgcm6qfz6gp5ec4cg5aidblsi4la"
-ROOT_COMPARTMENT_OCID="ocid1.compartment.oc1..aaaaaaaa67aj6v3kzhmcvyddk2yi7snd4x7vo6xtfdipk7fp4g2sp7rf4a7q"
+# ROOT_COMPARTMENT_OCID="ocid1.tenancy.oc1..aaaaaaaaaxpdh4jwbujm65yzxdblsi4la"
+ROOT_COMPARTMENT_OCID="ocid1.compartment.oc1..aaaaaaaa67aj6v3kzx4x7vo6xtfdipk7fp4g2sp7rf4a7q"
 # Optional: OCI CLI profile
 OCI_PROFILE="${OCI_PROFILE:-DEFAULT}"
 
