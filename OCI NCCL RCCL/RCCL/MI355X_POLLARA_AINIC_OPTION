@@ -1,0 +1,117 @@
+#!/bin/bash
+
+
+if [[ $# -lt 2 ]]; then
+  echo "Usage: $0 <collective> <hostfile>"
+  exit 1
+fi
+
+COLLECTIVE="$1"
+HOSTFILE="$2"
+
+# Default parameters (change if desired)
+START_MSG_SIZE="16M"
+END_MSG_SIZE="16G"
+NUM_ITER=20
+NUM_WARMUP=5
+NUM_CYCLES=2
+NUM_GPUS_PER_NODE=8
+NUM_QP_PER_CHANNEL=1
+NCCL_DBG=NONE
+
+# set this to 1 for RCCL over VF, set to 0 for PF
+RCCL_OVER_VF=0
+
+# set rccl script path accordingly
+rccl_script=$(pwd)"/run.sh"
+
+# rocm installation dir/paths
+ROCM_PATH=/opt/rocm
+RCCL_INSTALL_DIR=${ROCM_PATH}
+
+# OOB interface name - 支持环境变量覆盖
+OOB_IF="${OOB_IF:-ens9np0}"
+
+ANP_PLUGIN=librccl-anp.so
+OMPI_INSTALL_DIR=/opt/openmpi-4.1.6/
+RCCL_HOME_DIR=/opt/rccl
+ANP_HOME_DIR=/opt/amd-anp/build/
+RCCL_TESTS=/opt/rccl-tests
+
+if [[ "$RCCL_OVER_VF" -eq 1 ]]; then
+  # list of ROCE interfaces
+  NCCL_IB_HCA_LIST=ionic_10,ionic_11,ionic_12,ionic_13,ionic_14,ionic_15,ionic_8,ionic_9
+else
+  # list of ROCE interfaces
+  NCCL_IB_HCA_LIST=ionic_0,ionic_2,ionic_3,ionic_4,ionic_5,ionic_7,ionic_8,ionic_9
+fi
+
+collectives_list=(
+    "all_reduce"
+    "alltoall"
+    "alltoallv"
+    "broadcast"
+    "reduce_scatter"
+    "all_gather"
+    "reduce"
+    "scatter"
+    "gather"
+    "sendrecv"
+)
+
+# cluster compute nodes, now reads from user-specified hostfile
+if [ ! -f "$HOSTFILE" ]; then
+  echo "Hostfile '$HOSTFILE' not found!"
+  exit 1
+fi
+mapfile -t compute_nodes < <(grep -v '^\s*#' "$HOSTFILE" | grep -v '^\s*$')
+
+host_str=$(printf "%s," "${compute_nodes[@]/%/:${NUM_GPUS_PER_NODE}}")
+host_str=${host_str%,}
+
+NCCL_IB_DATA_TC=41
+NCCL_IB_FIFO_TC=185
+
+export PATH=${OMPI_INSTALL_DIR}/bin:${ROCM_PATH}/bin:${PATH}
+export LD_LIBRARY_PATH=/opt/rocm/lib:/opt/rocm/lib64:${RCCL_HOME_DIR}/build/release:${ANP_HOME_DIR}/build:${OMPI_INSTALL_DIR}/lib:
+export NUM_PROCESS=$((NUM_GPUS_PER_NODE*${#compute_nodes[@]}))
+export HOST_LIST=${host_str}
+echo "collectives_list=${collectives_list[*]}"
+echo "compute_nodes=${compute_nodes[*]}"
+echo "rccl_script=$rccl_script"
+echo "Using OOB interface: $OOB_IF"
+
+echo "Running $COLLECTIVE, qps ${NUM_QP_PER_CHANNEL} ..."
+if [[ "$RCCL_OVER_VF" -eq 1 ]]; then
+    echo "Running RCCL over VF ..."
+fi
+
+PER_NET_PEER_ARG_OPT_STR=""
+EXT_STR=""
+
+# Get the size of the list
+num_nodes=${#compute_nodes[@]}
+echo "Num nodes: $num_nodes"
+
+if [[ "$num_nodes" -eq "2" ]]; then
+    if [[ "$COLLECTIVE" == "alltoall" ]] || [[ "$COLLECTIVE" == "alltoallv" ]]; then
+        PER_NET_PEER_ARG_OPT_STR="-x RCCL_DISABLE_RAIL_TREES=1"
+    fi
+fi
+
+if [[ "$COLLECTIVE" == "alltoall" ]]; then
+     EXT_STR="-x NCCL_WORK_FIFO_BYTES=17179869184"
+else
+     EXT_STR="-x RCCL_LL128_FORCE_ENABLE=1"
+fi
+
+sudo systemctl disable ufw --now
+sudo iptables --flush
+sudo systemctl disable --now nftables
+sudo systemctl disable --now iptables
+
+set -x
+${OMPI_INSTALL_DIR}/bin/mpirun --np ${NUM_PROCESS} --allow-run-as-root \
+-H ${HOST_LIST} \
+--bind-to numa -x NCCL_IB_GID_INDEX=1 -x NCCL_GDR_FLUSH_DISABLE=1 -x RCCL_GDR_FLUSH_GPU_MEM_NO_RELAXED_ORDERING=0 -x PATH=/opt/openmpi-4.1.6/bin:/opt/rocm/bin:/home/ubuntu/.local/bin:/home/ubuntu/bin:/home/ubuntu/.cargo/bin:/home/ubuntu/.nvm/versions/node/v24.13.0/bin:/config/venv/Ubuntu_22.04_x86_64:/home/ubuntu/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin -x LD_LIBRARY_PATH=/opt/rccl/build/release:/opt/amd-anp/build:/opt/openmpi-4.1.6/lib:/opt/rccl/build/release/_deps/fmt-build: --mca btl '^vader,openib' --mca osc '^ucx' --mca pml ob1 --mca btl_tcp_if_include ${OOB_IF} --mca oob_tcp_if_include ${OOB_IF} -x NCCL_SOCKET_IFNAME=${OOB_IF} -x NCCL_IB_HCA=${NCCL_IB_HCA_LIST} -x NCCL_TOPO_DUMP_FILE=/tmp/system_run2.txt -x HSA_NO_SCRATCH_RECLAIM=1 -x NCCL_IB_TC=41 -x NCCL_IB_FIFO_TC=185 -x NCCL_IB_QPS_PER_CONNECTION=1 -x NCCL_IGNORE_CPU_AFFINITY=1 -x NCCL_DMABUF_ENABLE=1 -x NCCL_DEBUG=VERSION -x NCCL_NET_OPTIONAL_RECV_COMPLETION=1 -x NCCL_IB_USE_INLINE=1 -x IONIC_LOCKFREE=all -x RCCL_IB_ABORT_ON_ERROR=1 -x NCCL_NET_PLUGIN=librccl-anp.so -x NCCL_WORK_FIFO_BYTES=17179869184 -x NCCL_MAX_P2P_NCHANNELS=32 -x NCCL_PXN_DISABLE=1 -x LD_PRELOAD=/opt/rccl/build/release/librccl.so.1.0 \
+${RCCL_TESTS}/build/${COLLECTIVE}_perf -b ${START_MSG_SIZE} -e ${END_MSG_SIZE} -f 2 -g 1 -n ${NUM_ITER} -c 1 -w ${NUM_WARMUP} -N ${NUM_CYCLES}
