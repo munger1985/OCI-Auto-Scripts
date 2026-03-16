@@ -1,0 +1,168 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Open MPI 5.x variant (PRRTE)
+# Corrected version of your OMPI_INSTALL_DIR=/opt/openmpi-5.0.8 script.
+#
+# Main corrections:
+# - Avoid `-H host:8` style hostlist; generate a hostfile with `slots=` instead.
+# - Use `--` before the benchmark command.
+# - Keep your MCA and -x env exports, but ensure OOB_IF expansion is correct.
+
+usage() {
+  cat <<'EOF'
+Usage:
+  ./run-mpi-rccl-ompi5.sh <collective> <hostfile>
+
+Hostfile format:
+  One hostname/IP per line. Comments (#) and blank lines are ignored.
+
+Example:
+  echo -e "worker1\nworker2" > hosts.txt
+  DRY_RUN=1 ./run-mpi-rccl-ompi5.sh alltoall hosts.txt
+  ./run-mpi-rccl-ompi5.sh alltoall hosts.txt
+EOF
+}
+
+if [[ $# -lt 2 ]]; then
+  usage
+  exit 1
+fi
+
+COLLECTIVE="$1"
+HOSTFILE="$2"
+
+START_MSG_SIZE="${START_MSG_SIZE:-16M}"
+END_MSG_SIZE="${END_MSG_SIZE:-16G}"
+NUM_ITER="${NUM_ITER:-20}"
+NUM_WARMUP="${NUM_WARMUP:-5}"
+NUM_CYCLES="${NUM_CYCLES:-2}"
+NUM_GPUS_PER_NODE="${NUM_GPUS_PER_NODE:-8}"
+NUM_QP_PER_CHANNEL="${NUM_QP_PER_CHANNEL:-1}"
+DRY_RUN="${DRY_RUN:-0}"
+
+ROCM_PATH="${ROCM_PATH:-/opt/rocm}"
+OMPI_INSTALL_DIR="${OMPI_INSTALL_DIR:-/opt/openmpi-5.0.8}"
+RCCL_HOME_DIR="${RCCL_HOME_DIR:-/opt/rccl}"
+ANP_HOME_DIR="${ANP_HOME_DIR:-/opt/amd-anp/build}"
+RCCL_TESTS="${RCCL_TESTS:-/opt/rccl-tests}"
+OOB_IF="${OOB_IF:-eth0}"
+
+RCCL_OVER_VF="${RCCL_OVER_VF:-0}"
+if [[ "$RCCL_OVER_VF" -eq 1 ]]; then
+  NCCL_IB_HCA_LIST="${NCCL_IB_HCA_LIST:-mlx5_0,mlx5_1,mlx5_2,mlx5_3,mlx5_4,mlx5_5,mlx5_7,mlx5_8}"
+else
+  NCCL_IB_HCA_LIST="${NCCL_IB_HCA_LIST:-mlx5_0,mlx5_2,mlx5_3,mlx5_4,mlx5_5,mlx5_7,mlx5_8,mlx5_9}"
+fi
+
+if [[ ! -f "$HOSTFILE" ]]; then
+  echo "Hostfile '$HOSTFILE' not found" >&2
+  exit 1
+fi
+mapfile -t compute_nodes < <(grep -vE '^\s*#' "$HOSTFILE" | grep -vE '^\s*$')
+num_nodes="${#compute_nodes[@]}"
+if [[ "$num_nodes" -lt 1 ]]; then
+  echo "Hostfile '$HOSTFILE' has no hosts" >&2
+  exit 1
+fi
+
+NUM_PROCESS=$(( NUM_GPUS_PER_NODE * num_nodes ))
+
+# Generate OMPI hostfile with slots
+TMP_HOSTFILE="$(mktemp)"
+cleanup() { rm -f "$TMP_HOSTFILE"; }
+trap cleanup EXIT
+for h in "${compute_nodes[@]}"; do
+  echo "$h slots=$NUM_GPUS_PER_NODE" >> "$TMP_HOSTFILE"
+done
+
+export PATH="$OMPI_INSTALL_DIR/bin:$ROCM_PATH/bin:$PATH"
+
+# IMPORTANT: no trailing ':'
+export LD_LIBRARY_PATH="${LD_LIBRARY_PATH:-}"
+LD_LIBRARY_PATH="$ROCM_PATH/lib:$ROCM_PATH/lib64:$RCCL_HOME_DIR/build/release:${ANP_HOME_DIR}:$OMPI_INSTALL_DIR/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+export LD_LIBRARY_PATH
+
+PER_NET_PEER_ARG_OPT_STR=""
+EXT_STR=""
+if [[ "$num_nodes" -eq 2 ]]; then
+  if [[ "$COLLECTIVE" == "alltoall" || "$COLLECTIVE" == "alltoallv" ]]; then
+    PER_NET_PEER_ARG_OPT_STR="-x RCCL_DISABLE_RAIL_TREES=1"
+  fi
+fi
+if [[ "$COLLECTIVE" == "alltoall" ]]; then
+  EXT_STR="-x NCCL_WORK_FIFO_BYTES=17179869184"
+else
+  EXT_STR="-x RCCL_LL128_FORCE_ENABLE=1"
+fi
+
+MPI="$OMPI_INSTALL_DIR/bin/mpirun"
+BENCH="$RCCL_TESTS/build/${COLLECTIVE}_perf"
+if [[ ! -x "$BENCH" ]]; then
+  echo "Benchmark not found or not executable: $BENCH" >&2
+  exit 1
+fi
+
+cmd=(
+  "$MPI"
+  --np "$NUM_PROCESS"
+  --allow-run-as-root
+  --hostfile "$TMP_HOSTFILE"
+  --bind-to numa
+  --map-by ppr:"$NUM_GPUS_PER_NODE":node
+  -x NCCL_IB_GID_INDEX=3
+  -x NCCL_GDR_FLUSH_DISABLE=1
+  -x RCCL_GDR_FLUSH_GPU_MEM_NO_RELAXED_ORDERING=0
+  --mca btl '^vader,openib'
+  --mca osc '^ucx'
+  --mca pml ob1
+  --mca btl_tcp_if_include "$OOB_IF"
+  --mca oob_tcp_if_include "$OOB_IF"
+  -x NCCL_SOCKET_IFNAME="$OOB_IF"
+  -x NCCL_IB_HCA="$NCCL_IB_HCA_LIST"
+  -x NCCL_TOPO_DUMP_FILE=/tmp/system_run2.txt
+  -x HSA_NO_SCRATCH_RECLAIM=1
+  -x NCCL_IB_TC=41
+  -x NCCL_IB_FIFO_TC=185
+  -x NCCL_IB_QPS_PER_CONNECTION="$NUM_QP_PER_CHANNEL"
+  -x NCCL_IGNORE_CPU_AFFINITY=1
+  -x NCCL_DMABUF_ENABLE=1
+  -x NCCL_DEBUG=VERSION
+  -x NCCL_NET_OPTIONAL_RECV_COMPLETION=1
+  -x NCCL_IB_USE_INLINE=1
+  -x IONIC_LOCKFREE=all
+  -x RCCL_IB_ABORT_ON_ERROR=1
+  -x NCCL_NET_PLUGIN=librccl-anp.so
+  -x NCCL_MAX_P2P_NCHANNELS=32
+  -x NCCL_PXN_DISABLE=1
+  -x LD_PRELOAD=/opt/rccl/build/librccl.so.1.0
+  -x PATH
+  -x LD_LIBRARY_PATH
+)
+
+if [[ -n "$PER_NET_PEER_ARG_OPT_STR" ]]; then
+  # shellcheck disable=SC2206
+  cmd+=( $PER_NET_PEER_ARG_OPT_STR )
+fi
+if [[ -n "$EXT_STR" ]]; then
+  # shellcheck disable=SC2206
+  cmd+=( $EXT_STR )
+fi
+
+cmd+=( -- "$BENCH" -b "$START_MSG_SIZE" -e "$END_MSG_SIZE" -f 2 -g 1 -n "$NUM_ITER" -c 1 -w "$NUM_WARMUP" -N "$NUM_CYCLES" )
+
+echo "Num nodes: $num_nodes"
+echo "NUM_GPUS_PER_NODE: $NUM_GPUS_PER_NODE"
+echo "NUM_PROCESS: $NUM_PROCESS"
+echo "OOB_IF: $OOB_IF"
+echo "Generated hostfile: $TMP_HOSTFILE"
+
+if [[ "$DRY_RUN" == "1" ]]; then
+  printf 'mpirun command:\n'
+  printf ' %q' "${cmd[@]}"
+  printf '\n'
+  exit 0
+fi
+
+set -x
+"${cmd[@]}"
