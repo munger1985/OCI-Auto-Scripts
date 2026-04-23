@@ -1,4 +1,3 @@
-#!/usr/bin/env bash
 # Copyright (c) 2018, Oracle and/or its affiliates.
 # The Universal Permissive License (UPL), Version 1.0
 #
@@ -6,6 +5,7 @@
 # Enhanced Version: Fixed interface name length (max 15 chars)
 #
 # 2026-03-23 FIX: MACVLAN name max 15 chars (IFNAMSIZ limit)
+# 2026-04-22 FIX: Create /etc/iproute2/rt_tables if missing
 
 declare -r THIS=$(basename "$0")
 declare -r MD_URL='http://169.254.169.254/opc/v1/vnics/'
@@ -101,6 +101,26 @@ declare NS_FORMAT=''
 declare -a SEC_ADDRS
 declare -a SEC_VNICS
 declare -r IFACE_AWK_SCRIPT='/tmp/oci_vcn_iface.awk'
+
+# 🔧 FIX: Ensure /etc/iproute2/rt_tables exists
+if [ ! -d /etc/iproute2 ]; then
+    mkdir -p /etc/iproute2 || echo "Warning: Could not create /etc/iproute2" >&2
+fi
+if [ ! -f "$RTS_FILE" ]; then
+    cat > "$RTS_FILE" << 'EOF'
+# reserved values
+#
+255	local
+254	main
+253	default
+0	unspec
+#
+# local
+#
+#1	inr.ruhep
+EOF
+    echo "Info: Created default $RTS_FILE" >&2
+fi
 
 # ============================================================================
 # AWK 脚本（更新以匹配新命名格式）
@@ -770,12 +790,14 @@ oci_vcn_read() {
             local -i md_i=${MD_I_BY_MAC[$mac]:--1}
             if [ $md_i -lt 0 ]; then
                 local iface="${IP_IFACES[$ip_i]}"
-                [ -n "$addr" ] && IP_CONFIGS[$ip_i]="$DELETE" || {
-                    [ -z "$IS_VM" ] && [ ${IP_VLTAGS[$ip_i]} -ne 0 ] && {
-                        IP_CONFIGS[$ip_i]="$DELETE"
-                        warn_ifaces="$warn_ifaces $iface"
-                    }
-                }
+                # Only mark for deletion if it's a virtual interface (macvlan/vlan) or unprovisioned secondary
+                local is_virtual=$($IP link show $iface 2>/dev/null | grep -q "macvlan\|vlan" && echo "t" || echo "")
+                if [ -n "$is_virtual" ] || [ -n "$addr" ] && [ ${IP_VLTAGS[$ip_i]} -ne 0 ]; then
+                    IP_CONFIGS[$ip_i]="$DELETE"
+                    warn_ifaces="$warn_ifaces $iface"
+                elif [ -n "$addr" ]; then
+                    oci_vcn_warn "Preserving non-OCI IP $addr on $iface (manual config detected)"
+                fi
                 [ -z "$IS_VM" ] || {
                     ([ $attempt -eq 1 ] && [ "${IP_STATES[$ip_i]}" = 'DOWN' ]) || oci_vcn_err "interface $iface MAC $mac no metadata"
                     $IP link set dev $iface up
@@ -840,11 +862,16 @@ oci_vcn_config() {
         if [ "$config" = "$DELETE" ]; then
             local mac="${IP_MACS[$ip_i]}"
             local secad="${IP_SECADS[$ip_i]#$NA}"
-            if [ "$secad" != "$YES" ] || [ "$del_vmac" != "$mac" ]; then
-                oci_vcn_info "removing IP config from MAC $mac"
+            local iface="${IP_IFACES[$ip_i]}"
+            # Only delete if it's a virtual interface (macvlan/vlan); preserve manual IPs on physical interfaces
+            local is_virtual=$($IP link show $iface 2>/dev/null | grep -q "macvlan\|vlan" && echo "t" || echo "")
+            if [ -n "$is_virtual" ] && ( [ "$secad" != "$YES" ] || [ "$del_vmac" != "$mac" ] ); then
+                oci_vcn_info "removing virtual IP config from MAC $mac on $iface"
                 oci_vcn_ip_addr_del $ip_i
                 found='t'
                 [ "${IP_VLTAGS[$ip_i]}" -eq 0 ] || del_vmac=$mac
+            elif [ -n "$is_virtual" ]; then
+                oci_vcn_warn "Skipping deletion of $mac on $iface (protected virtual config)"
             fi
         fi
     done
@@ -862,18 +889,26 @@ oci_vcn_deconfig_all() {
     for mac in "${IP_MACS[@]}"; do
         local addr="${IP_ADDRS[$ip_i]#$NA}"
         if [ -n "$addr" ]; then
+            local iface="${IP_IFACES[$ip_i]}"
+            local is_virtual=$($IP link show $iface 2>/dev/null | grep -q "macvlan\|vlan" && echo "t" || echo "")
             if [ "${IP_SECADS[$ip_i]}" != "$YES" ]; then
-                if [ $ip_i -gt 0 ]; then
+                if [ $ip_i -gt 0 ] && [ -n "$is_virtual" ]; then
                     local -i md_i=${MD_I_BY_MAC[$mac]:--1}
                     local vnicmsg=''
                     [ $md_i -ge 0 ] && vnicmsg=" with id ${MD_VNICS[$md_i]}"
-                    oci_vcn_info "removing IP config $addr for VNIC MAC $mac$vnicmsg"
+                    oci_vcn_info "removing virtual IP config $addr for VNIC MAC $mac$vnicmsg"
                     oci_vcn_ip_addr_del $ip_i
                     found='t'
+                elif [ -n "$is_virtual" ]; then
+                    oci_vcn_warn "Preserving virtual but manual IP $addr on $iface"
                 fi
             else
-                oci_vcn_ip_sec_addr_del $ip_i 't'
-                found='t'
+                if [ -n "$is_virtual" ]; then
+                    oci_vcn_ip_sec_addr_del $ip_i 't'
+                    found='t'
+                else
+                    oci_vcn_warn "Preserving non-virtual secondary IP $addr on $iface"
+                fi
             fi
         fi
         ip_i+=1
