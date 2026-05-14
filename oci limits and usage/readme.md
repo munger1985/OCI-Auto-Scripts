@@ -14,7 +14,7 @@
 # code for reference
 
 
-use the code  to run, you can get your compartment usage and limits
+use the code ** limitAndUsage2.py ** to run, you can get your compartment usage and limits
 
 
 ![image](./console4.png)
