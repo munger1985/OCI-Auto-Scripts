@@ -3,7 +3,7 @@
 
 # how to get the limit name and service name, and put them in code
 
-## open the console, go to limits and usuage
+## open the console, go to limits and usage
 
 ![image](./console.png)
 
