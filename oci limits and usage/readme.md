@@ -1,7 +1,7 @@
 
 
 
-# how to check the limit name
+# how to get the limit name and service name, and put them in code
 
 ## open the console, go to limits and usuage
 
