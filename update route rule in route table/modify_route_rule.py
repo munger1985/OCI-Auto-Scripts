@@ -8,7 +8,7 @@ config.update({"region": "ap-singapore-1"})
 virtual_network = oci.core.VirtualNetworkClient(config)
 '''
 how to get this privateIP ocid, just make sure this ip checked 'skip src/dst check' as this will be taken as a hop, then use 
-  search bar in console to search it from 'view all' which will direct you to resource explorer, then use 
+  search bar in console to search it from 'view all' which will direct you to resource explorer, then click on 3dots to get ocid. see also png file in current folder 
 '''
 privateIPID='ocid1.privateip.oc1.ap-singapore-1.abzwsljrbcfsu6nc2tb2uovhu6r7atdro3csxqtucxox5bbdmdmcrqtym3pa'
 
@@ -48,7 +48,7 @@ def add_route_via_private_ip(
 ):
     """使用 IP 地址作为下一跳添加路由规则"""
 
-    # 1. 把 IP 转成 OCID
+  
 
     # 2. 获取当前路由规则
     rt = virtual_network.get_route_table(route_table_id).data
