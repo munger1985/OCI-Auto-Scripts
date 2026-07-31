@@ -1,32 +1,34 @@
-#!/usr/bin/env python3
 """
-Gradio interface for checking available hosts in OCI Dedicated Compute Host pool.
-
+Gradio interface for checking available hosts in an OCI Dedicated Compute Host pool.
+jingsong.liu@oracle.com
 This script uses a local OCI API key config (OCI CLI config file).
 It counts compute hosts in lifecycle_state=AVAILABLE and instance_id=None
-(i.e., free/unassigned hosts) and groups counts by shape.
+(free/unassigned hosts), groups counts by shape, and shows a table of hosts.
 
-Run with: python3 oci_dedicated_hosts_gradio.py
+Run with:
+    python3 thisFile.py
+
 Then open the provided URL in your browser.
 """
 
 from __future__ import annotations
 
-import gradio as gr
 from collections import Counter, defaultdict
-
-import oci
-import os
 import configparser
+import os
 
-regions= [
-                "us-ashburn-1", "us-phoenix-1", "us-sanjose-1",
-                "eu-frankfurt-1", "eu-amsterdam-1", "eu-zurich-1",
-                "ap-sydney-1", "ap-melbourne-1", "ap-osaka-1", "ap-seoul-1",
-                "ap-jakarta-1", "ap-singapore-1", "me-jeddah-1", "me-dubai-1",
-                "sa-saopaulo-1", "uk-london-1", "ca-toronto-1", "ca-montreal-1",
-                "ap-kulai-1",   "il-jerusalem-1", "uk-cardiff-1",
-          ]
+import gradio as gr
+import oci
+
+
+REGIONS = [
+    "us-ashburn-1", "us-phoenix-1", "us-sanjose-1",
+    "eu-frankfurt-1", "eu-amsterdam-1", "eu-zurich-1",
+    "ap-sydney-1", "ap-melbourne-1", "ap-osaka-1", "ap-seoul-1",
+    "ap-jakarta-1", "ap-singapore-1", "me-jeddah-1", "me-dubai-1",
+    "sa-saopaulo-1", "uk-london-1", "ca-toronto-1", "ca-montreal-1",
+    "ap-kulai-1", "il-jerusalem-1", "uk-cardiff-1",
+]
 
 
 def list_compute_hosts(compartment_id: str, cfg: dict):
@@ -42,70 +44,92 @@ def get_available_profiles():
     config_path = os.path.expanduser("~/.oci/config")
     if not os.path.exists(config_path):
         return ["DEFAULT"]
+
     config = configparser.ConfigParser()
     config.read(config_path)
-    profiles = ["DEFAULT"] + list(config.sections())
+
+    profiles = ["DEFAULT"]
+    profiles.extend(section for section in config.sections() if section != "DEFAULT")
     return profiles
 
 
+def build_hosts_table(hosts, region: str):
+    rows = []
+    for host in hosts:
+        rows.append([
+            getattr(host, "id", ""),
+            getattr(host, "lifecycle_state", ""),
+            region,
+            getattr(host, "shape", ""),
+        ])
+    return rows
+
+
 def check_hosts(profile, region, all_states):
-    # Configure OCI SDK to use local API key config.
     try:
         cfg = oci.config.from_file(profile_name=profile)
-        # Force region
         cfg["region"] = region
-    except Exception as e:
-        return f"Failed to load OCI config. Ensure you have an API key configured and a valid OCI config file.\nError: {e}"
+    except Exception as exc:
+        return (
+            "Failed to load OCI config. Ensure you have an API key configured "
+            f"and a valid OCI config file.\nError: {exc}",
+            [],
+        )
 
     tenancy_from_config = cfg.get("tenancy")
     if not tenancy_from_config:
-        return "Could not determine tenancy OCID from config. Ensure config has 'tenancy='."
+        return "Could not determine tenancy OCID from config. Ensure config has 'tenancy='.", []
 
-    # Fetch hosts
-    hosts = []
-    hosts.extend(list_compute_hosts(tenancy_from_config, cfg))
+    try:
+        hosts = list_compute_hosts(tenancy_from_config, cfg)
+    except Exception as exc:
+        return f"Failed to list compute hosts in {region}.\nError: {exc}", []
 
-    # De-dup by host id
     by_id = {}
-    for h in hosts:
-        host_id = getattr(h, "id", None)
+    for host in hosts:
+        host_id = getattr(host, "id", None)
         if host_id:
-            by_id[host_id] = h
+            by_id[host_id] = host
     hosts = list(by_id.values())
 
+    hosts_table = build_hosts_table(hosts, region)
+
     if all_states:
-        counts = defaultdict(Counter)  # state -> Counter(shape)
-        for h in hosts:
-            state = getattr(h, "lifecycle_state", "UNKNOWN")
-            shape = getattr(h, "shape", "UNKNOWN")
+        counts = defaultdict(Counter)
+        for host in hosts:
+            state = getattr(host, "lifecycle_state", "UNKNOWN")
+            shape = getattr(host, "shape", "UNKNOWN")
             counts[state][shape] += 1
 
         output = ""
         for state in sorted(counts.keys()):
             output += f"State={state}\n"
-            for shape, c in counts[state].most_common():
-                output += f" \t  {shape}: {c}\n"
-        return output.strip()
+            for shape, count in counts[state].most_common():
+                output += f"\t{shape}:   {count}\n"
 
-    # Default: only AVAILABLE unassigned
+        return output.strip(), hosts_table
+
     available = []
-    for h in hosts:
-        state = getattr(h, "lifecycle_state", None)
-        instance_id = getattr(h, "instance_id", None)
+    for host in hosts:
+        state = getattr(host, "lifecycle_state", None)
+        instance_id = getattr(host, "instance_id", None)
         if state == "AVAILABLE" and not instance_id:
-            available.append(h)
+            available.append(host)
 
-    c_by_shape = Counter(getattr(h, "shape", "UNKNOWN") for h in available)
-    total = sum(c_by_shape.values())
+    counts_by_shape = Counter(getattr(host, "shape", "UNKNOWN") for host in available)
+    total = sum(counts_by_shape.values())
+
     output = f"Total AVAILABLE (unassigned) hosts: {total}\n"
-    for shape, c in c_by_shape.most_common():
-        output += f"{shape}: {c}\n"
-    return output.strip()
+    for shape, count in counts_by_shape.most_common():
+        output += f"{shape}: {count}\n"
+
+    return output.strip(), hosts_table
 
 
 def create_interface():
     profiles = get_available_profiles()
-    with gr.Blocks(title="OCI Dedicated Hosts Checker",theme=gr.themes.Glass()) as demo:
+
+    with gr.Blocks(title="OCI Dedicated Hosts Checker", theme=gr.themes.Ocean()) as demo:
         gr.Markdown("# OCI Dedicated Pool Checker")
         gr.Markdown("Enter the details and click Submit to check available hosts.")
 
@@ -113,19 +137,19 @@ def create_interface():
             choices=profiles,
             value="DEFAULT",
             label="OCI Config Profile",
-            info="Select the profile from ~/.oci/config"
+            info="Select the profile from ~/.oci/config",
         )
 
         region = gr.Dropdown(
-            choices=regions,
+            choices=REGIONS,
             value="ap-kulai-1",
             label="Region",
-            info="Select the OCI region to query."
+            info="Select the OCI region to query.",
         )
 
         all_states = gr.Checkbox(
             label="Show counts for all lifecycle states",
-            value=False
+            value=False,
         )
 
         submit_btn = gr.Button("Check Hosts", variant="primary")
@@ -133,13 +157,21 @@ def create_interface():
         output = gr.Textbox(
             label="Results",
             lines=20,
-            interactive=False
+            interactive=False,
+        )
+
+        hosts_table = gr.Dataframe(
+            headers=["id", "lifecycle_status", "region", "shape"],
+            datatype=["str", "str", "str", "str"],
+            label="Compute Hosts",
+            interactive=False,
+            wrap=True,
         )
 
         submit_btn.click(
             fn=check_hosts,
             inputs=[profile, region, all_states],
-            outputs=output
+            outputs=[output, hosts_table],
         )
 
     return demo
