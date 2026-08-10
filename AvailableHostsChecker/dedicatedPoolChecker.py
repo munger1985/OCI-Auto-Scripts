@@ -1,12 +1,13 @@
+#!/usr/bin/env python3
 """
 Gradio interface for checking available hosts in an OCI Dedicated Compute Host pool.
-jingsong.liu@oracle.com
+# jingsong.liu@oracle.com
 This script uses a local OCI API key config (OCI CLI config file).
 It counts compute hosts in lifecycle_state=AVAILABLE and instance_id=None
 (free/unassigned hosts), groups counts by shape, and shows a table of hosts.
 
 Run with:
-    python3 thisFile.py
+    python3 oci_dedicated_hosts_gradio.py
 
 Then open the provided URL in your browser.
 """
@@ -105,7 +106,7 @@ def check_hosts(profile, region, all_states):
         for state in sorted(counts.keys()):
             output += f"State={state}\n"
             for shape, count in counts[state].most_common():
-                output += f"\t{shape}:   {count}\n"
+                output += f"\t{shape}: {count}\n"
 
         return output.strip(), hosts_table
 
@@ -126,10 +127,47 @@ def check_hosts(profile, region, all_states):
     return output.strip(), hosts_table
 
 
+def query_baremetal_host(profile, region, host_id):
+    if not host_id or not host_id.strip():
+        return "Please enter a BareMetal host ID."
+
+    try:
+        cfg = oci.config.from_file(profile_name=profile)
+        cfg["region"] = region
+    except Exception as exc:
+        return f"Failed to load OCI config.\nError: {exc}"
+
+    try:
+        compute = oci.core.ComputeClient(config=cfg)
+        host = compute.get_compute_host(compute_host_id=host_id.strip()).data
+    except oci.exceptions.ServiceError as e:
+        if e.status == 404:
+            return f"Host not found: {host_id} in region {region}."
+        return f"Service error ({e.status}): {e.message}"
+    except Exception as exc:
+        return f"Failed to query host.\nError: {exc}"
+
+    details = []
+    for attr in sorted(dir(host)):
+        if attr.startswith("_"):
+            continue
+        try:
+            val = getattr(host, attr)
+            if callable(val):
+                continue
+            if isinstance(val, (list, dict)):
+                val = str(val)
+            details.append(f"{attr}: {val}")
+        except Exception:
+            pass
+
+    return "\n".join(details)
+
+
 def create_interface():
     profiles = get_available_profiles()
 
-    with gr.Blocks(title="OCI Dedicated Hosts Checker", theme=gr.themes.Ocean()) as demo:
+    with gr.Blocks(title="OCI Dedicated Hosts Checker", theme=gr.themes.Glass()) as demo:
         gr.Markdown("# OCI Dedicated Pool Checker")
         gr.Markdown("Enter the details and click Submit to check available hosts.")
 
@@ -172,6 +210,29 @@ def create_interface():
             fn=check_hosts,
             inputs=[profile, region, all_states],
             outputs=[output, hosts_table],
+        )
+
+        gr.Markdown("---")
+        gr.Markdown("### Query a specific BareMetal host by ID")
+
+        bm_host_id = gr.Textbox(
+            label="BareMetal Host OCID",
+            placeholder="ocid1.computehost.oc1...",
+            lines=1,
+        )
+
+        bm_query_btn = gr.Button("Query Host Details", variant="secondary")
+
+        bm_output = gr.Textbox(
+            label="Host Details",
+            lines=25,
+            interactive=False,
+        )
+
+        bm_query_btn.click(
+            fn=query_baremetal_host,
+            inputs=[profile, region, bm_host_id],
+            outputs=[bm_output],
         )
 
     return demo
