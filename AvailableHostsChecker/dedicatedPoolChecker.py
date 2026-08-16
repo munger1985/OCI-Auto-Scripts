@@ -94,6 +94,8 @@ def check_hosts(profile, region, all_states):
     hosts = list(by_id.values())
 
     hosts_table = build_hosts_table(hosts, region)
+    total_counts_by_shape = Counter(getattr(host, "shape", "UNKNOWN") for host in hosts)
+    total_hosts = sum(total_counts_by_shape.values())
 
     if all_states:
         counts = defaultdict(Counter)
@@ -106,7 +108,8 @@ def check_hosts(profile, region, all_states):
         for state in sorted(counts.keys()):
             output += f"State={state}\n"
             for shape, count in counts[state].most_common():
-                output += f"\t{shape}: {count}\n"
+                shape_total = total_counts_by_shape.get(shape, 0)
+                output += f"\t{shape}: {count} / total {shape_total}\n"
 
         return output.strip(), hosts_table
 
@@ -120,9 +123,13 @@ def check_hosts(profile, region, all_states):
     counts_by_shape = Counter(getattr(host, "shape", "UNKNOWN") for host in available)
     total = sum(counts_by_shape.values())
 
-    output = f"Total AVAILABLE (unassigned) hosts: {total}\n"
-    for shape, count in counts_by_shape.most_common():
-        output += f"{shape}: {count}\n"
+    output = (
+        f"Total AVAILABLE (unassigned) hosts: {total}\n"
+        f"Total hosts: {total_hosts}\n"
+    )
+    for shape, shape_total in total_counts_by_shape.most_common():
+        available_count = counts_by_shape.get(shape, 0)
+        output += f"{shape}: AVAILABLE {available_count} / total {shape_total}\n"
 
     return output.strip(), hosts_table
 
