@@ -171,6 +171,105 @@ def query_baremetal_host(profile, region, host_id):
     return "\n".join(details)
 
 
+def format_model_details(model):
+    details = []
+    for attr in sorted(dir(model)):
+        if attr.startswith("_"):
+            continue
+        try:
+            val = getattr(model, attr)
+            if callable(val):
+                continue
+            if isinstance(val, (list, dict)):
+                val = str(val)
+            details.append(f"{attr}: {val}")
+        except Exception:
+            pass
+
+    return "\n".join(details)
+
+
+def query_baremetal_host_by_instance(profile, region, instance_id):
+    if not instance_id or not instance_id.strip():
+        return "Please enter an Instance OCID."
+
+    instance_id = instance_id.strip()
+
+    try:
+        cfg = oci.config.from_file(profile_name=profile)
+        cfg["region"] = region
+    except Exception as exc:
+        return f"Failed to load OCI config.\nError: {exc}"
+
+    tenancy_from_config = cfg.get("tenancy")
+    if not tenancy_from_config:
+        return "Could not determine tenancy OCID from config. Ensure config has 'tenancy='."
+
+    compute = oci.core.ComputeClient(config=cfg)
+
+    instance_summary = ""
+    try:
+        instance = compute.get_instance(instance_id=instance_id).data
+        instance_summary = (
+            "Instance\n"
+            f"id: {getattr(instance, 'id', '')}\n"
+            f"display_name: {getattr(instance, 'display_name', '')}\n"
+            f"shape: {getattr(instance, 'shape', '')}\n"
+            f"lifecycle_state: {getattr(instance, 'lifecycle_state', '')}\n"
+            f"availability_domain: {getattr(instance, 'availability_domain', '')}\n"
+            f"fault_domain: {getattr(instance, 'fault_domain', '')}\n"
+        )
+    except oci.exceptions.ServiceError as e:
+        if e.status == 404:
+            instance_summary = (
+                "Instance\n"
+                f"id: {instance_id}\n"
+                f"warning: Instance not found in region {region}, continuing to search compute hosts.\n"
+            )
+        else:
+            instance_summary = (
+                "Instance\n"
+                f"id: {instance_id}\n"
+                f"warning: Failed to query instance ({e.status}): {e.message}\n"
+            )
+    except Exception as exc:
+        instance_summary = (
+            "Instance\n"
+            f"id: {instance_id}\n"
+            f"warning: Failed to query instance: {exc}\n"
+        )
+
+    try:
+        hosts = list_compute_hosts(tenancy_from_config, cfg)
+    except oci.exceptions.ServiceError as e:
+        return (
+            f"{instance_summary}\n"
+            f"Failed to list compute hosts in {region} ({e.status}): {e.message}"
+        )
+    except Exception as exc:
+        return f"{instance_summary}\nFailed to list compute hosts in {region}.\nError: {exc}"
+
+    matched_hosts = [host for host in hosts if getattr(host, "instance_id", None) == instance_id]
+
+    if not matched_hosts:
+        return (
+            f"{instance_summary}\n"
+            "BareMetal Host\n"
+            "status: NOT_FOUND\n"
+            "message: No compute host in this tenancy/region has instance_id equal to the provided Instance OCID.\n"
+            "Please verify the region/profile and that this is a BareMetal instance assigned to a compute host."
+        )
+
+    output = [instance_summary.strip(), "BareMetal Host"]
+    for idx, host in enumerate(matched_hosts, start=1):
+        if len(matched_hosts) > 1:
+            output.append(f"\nMatched host #{idx}")
+        output.append(f"baremetal_host_id: {getattr(host, 'id', '')}")
+        output.append(format_model_details(host))
+
+    return "\n".join(output)
+
+
 def create_interface():
     profiles = get_available_profiles()
 
@@ -187,7 +286,7 @@ def create_interface():
 
         region = gr.Dropdown(
             choices=REGIONS,
-            value="ap-kulai-1",
+            value="eu-frankfurt-1",
             label="Region",
             info="Select the OCI region to query.",
         )
@@ -240,6 +339,29 @@ def create_interface():
             fn=query_baremetal_host,
             inputs=[profile, region, bm_host_id],
             outputs=[bm_output],
+        )
+
+        gr.Markdown("---")
+        gr.Markdown("### Query BareMetal host by Instance ID")
+
+        instance_ocid = gr.Textbox(
+            label="Instance OCID",
+            placeholder="ocid1.instance.oc1...",
+            lines=1,
+        )
+
+        instance_query_btn = gr.Button("Find BareMetal Host", variant="secondary")
+
+        instance_query_output = gr.Textbox(
+            label="BareMetal Host Lookup Result",
+            lines=30,
+            interactive=False,
+        )
+
+        instance_query_btn.click(
+            fn=query_baremetal_host_by_instance,
+            inputs=[profile, region, instance_ocid],
+            outputs=[instance_query_output],
         )
 
     return demo
