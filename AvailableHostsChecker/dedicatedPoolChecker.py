@@ -24,6 +24,7 @@ import oci
 
 REGIONS = [
     "us-ashburn-1", "us-phoenix-1", "us-sanjose-1",
+    "ap-tokyo-1", "ap-chuncheon-1", "ap-hyderabad-1", "ap-mumbai-1", "ap-osaka-1", "ap-seoul-1",
     "eu-frankfurt-1", "eu-amsterdam-1", "eu-zurich-1",
     "ap-sydney-1", "ap-melbourne-1", "ap-osaka-1", "ap-seoul-1",
     "ap-jakarta-1", "ap-singapore-1", "me-jeddah-1", "me-dubai-1",
@@ -273,7 +274,7 @@ def query_baremetal_host_by_instance(profile, region, instance_id):
 def create_interface():
     profiles = get_available_profiles()
 
-    with gr.Blocks(title="OCI Dedicated Hosts Checker", theme=gr.themes.Glass()) as demo:
+    with gr.Blocks(title="OCI Dedicated Hosts Checker") as demo:
         gr.Markdown("# OCI Dedicated Pool Checker")
         gr.Markdown("Enter the details and click Submit to check available hosts.")
 
@@ -369,4 +370,4 @@ def create_interface():
 
 if __name__ == "__main__":
     demo = create_interface()
-    demo.launch(share=False)
+    demo.launch(share=False, theme=gr.themes.Glass())
